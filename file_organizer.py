@@ -43,3 +43,4 @@ for file in os.listdir(path):
         shutil.move(file_path, os.path.join(path, "Others", file))
 
 print("✅ Files organized successfully!")
+input("Press Enter to exit....")
