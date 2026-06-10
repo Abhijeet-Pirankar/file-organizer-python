@@ -1,20 +1,67 @@
-# File Organizer (Python)
+📂 Advanced Python File Organizer
 
-A simple desktop tool to automatically organize files into folders.
+An automated file management tool built with Python that organizes files into categorized folders based on their extensions.
 
-## Features
-- Organizes Images, PDFs, Videos, Docs, Music
-- Creates folders automatically
-- Easy to use
+🚀 Features
 
-## How to Use
-1. Run the .exe file
-2. Select the folder
-3. Files will be organized automatically
+- Automatic file categorization
+- Duplicate file handling
+- Activity logging
+- Report generation
+- File statistics
+- EXE version available
+- Supports multiple file types
 
-## Technologies Used
+📁 Supported Categories
+
+- Images (.jpg, .jpeg, .png, .gif, .webp)
+- PDFs (.pdf)
+- Videos (.mp4, .mkv, .avi, .mov)
+- Documents (.docx, .txt, .pptx, .xlsx)
+- Music (.mp3, .wav)
+- Archives (.zip, .rar, .7z)
+- Programs (.exe, .msi)
+- Code Files (.py, .html, .css, .js, .java, .cpp)
+
+🛠 Technologies Used
+
 - Python
-- Tkinter (GUI)
+- os
+- shutil
+- PyInstaller
+- Git & GitHub
 
-## Author
+▶️ How to Run
+
+Python Version
+
+python file_organizer.py
+
+EXE Version
+
+Download the latest EXE from the Releases section and run:
+
+file_organizer.exe
+
+📊 Output
+
+The program generates:
+
+- Organized folders
+- log.txt (activity log)
+- report.txt (summary report)
+
+📌 Future Improvements
+
+- GUI using Tkinter
+- Drag and Drop Support
+- Dark Mode Interface
+- Real-Time Folder Monitoring
+
+👨‍💻 Author
+
 Abhijeet Pirankar
+
+⭐ GitHub
+
+If you found this project useful, consider giving it a star.
