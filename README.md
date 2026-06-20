@@ -61,7 +61,3 @@ The program generates:
 👨‍💻 Author
 
 Abhijeet Pirankar
-
-⭐ GitHub
-
-If you found this project useful?
