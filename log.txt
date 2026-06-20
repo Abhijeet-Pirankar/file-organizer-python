@@ -1,9 +1,5 @@
 
 
-===== Run Started: 2026-06-10 17:19:36.571210 =====
-Total files moved: 0
-===== Run Finished =====
-
 
 ===== Run Started: 2026-06-12 18:23:03.062413 =====
 Moved 1 - Shortcut.lnk -> Others
