@@ -3,3 +3,79 @@
 ===== Run Started: 2026-06-10 17:19:36.571210 =====
 Total files moved: 0
 ===== Run Finished =====
+
+
+===== Run Started: 2026-06-12 18:23:03.062413 =====
+Moved 1 - Shortcut.lnk -> Others
+Moved 1.jpg -> Images
+Moved Abhijeet Ep 2.dwg -> Others
+Moved Abhijeet Exp 4.dwg -> Others
+Moved acad.exe -> Programs
+Moved Antigravity.exe -> Programs
+Moved Autodesk_AutoCAD_2027_English_en-US_setup_webinstall.exe -> Programs
+Moved black-hole2.3840x2160.mp4 -> Videos
+Moved BraveBrowserSetup-BRV010 (1).exe -> Programs
+Moved BraveBrowserSetup-BRV010.exe -> Programs
+Moved ChatGPT Image Jun 10, 2026, 10_51_40 AM.png -> Images
+Moved ChatGPT Image Jun 8, 2026, 03_26_11 PM - Shortcut.lnk -> Others
+Moved ChatGPT Image Jun 8, 2026, 03_26_11 PM.png -> Images
+Moved ChromeSetup.exe -> Programs
+Moved Create_Installer_ACD_2026_1_1_English_WIN64.exe -> Programs
+Moved debug.log -> Others
+Moved download (1) - Shortcut.lnk -> Others
+Moved download (1).jpg -> Images
+Moved download - Shortcut.lnk -> Others
+Moved download.jpg -> Images
+Moved Downloads - Shortcut.lnk -> Others
+Moved eddy_current_braking (1).pdf -> PDFs
+Moved eddy_current_braking.pdf -> PDFs
+Moved eddy_current_braking_final.pdf -> PDFs
+Moved eddy_current_braking_labeled.pdf -> PDFs
+Moved eddy_current_braking_with_image.pdf -> PDFs
+Moved file_organizer (1) - Shortcut.lnk -> Others
+Moved file_organizer (1).exe -> Programs
+Moved file_organizer.exe -> Programs
+Moved Gemini_Generated_Image_88xqzw88xqzw88xq.png -> Images
+Moved Gemini_Generated_Image_craej3craej3crae - Shortcut.lnk -> Others
+Moved Gemini_Generated_Image_craej3craej3crae.png -> Images
+Moved Gemini_Generated_Image_lkp1ublkp1ublkp1.png -> Images
+Moved Gemini_Generated_Image_xlme37xlme37xlme.png -> Images
+Moved Gemini_Generated_Image_yxpcvgyxpcvgyxpc.png -> Images
+Moved Git-2.54.0-64-bit - Shortcut.lnk -> Others
+Moved Git-2.54.0-64-bit.exe -> Programs
+Moved GitHubDesktopSetup-x64 (1).exe -> Programs
+Moved GitHubDesktopSetup-x64.exe -> Programs
+Moved jett-valorant-animated.1920x1080.mp4 -> Videos
+Moved LinkedIn Installer.exe -> Programs
+Moved Microsoft.Services.Store.winmd -> Others
+Moved mingw-get-setup (1).exe -> Programs
+Moved mingw-get-setup.exe -> Programs
+Moved Parth Naik and Abhijeet Pirankar.pptx -> Docs
+Moved PHYSICS MODEL on mini power generator (1) - Shortcut.lnk -> Others
+Moved PHYSICS MODEL on mini power generator - Shortcut.lnk -> Others
+Moved physics project report (3) (1).pdf -> PDFs
+Moved python-3.14.3-amd64.exe -> Programs
+Moved python-essentials-1.1 - Shortcut.lnk -> Others
+Moved python-essentials-1.1.png -> Images
+Moved PythonEssentials1Update20260609-32-o2y44h - Shortcut.lnk -> Others
+Moved PythonEssentials1Update20260609-32-o2y44h.jpg - Shortcut.lnk -> Others
+Moved PythonEssentials1Update20260609-32-o2y44h.jpg.jpeg -> Images
+Moved PythonEssentials1Update20260609-32-o2y44h.pdf -> PDFs
+Moved report.txt -> Docs
+Moved setup.exe -> Programs
+Moved toBcInicDclJDoIwFADQE30GBVJIjCmDyBCcMOrKQCG0UaBIVeBUXsfb6Nu-74cKwXtLlsuGPEYuygJE3sylqheZYEQibS33tOWcNdWyW_zPwklh-iQ9uvcJHezWDxGzGcXkAsFldkxzftYUijc09F7A95pS4mhIobbzZESKGwM4W8L0CDAyuxiHr0EbjEJo79FUkRG43Tu7ec -> Others
+Moved VSCodeUserSetup-x64-1.111.0.exe -> Programs
+Moved WhatsApp Image 2026-04-04 at 10.09.52 PM.jpeg -> Images
+Moved WhatsApp Image 2026-04-30 at 3.16.07 PM - Shortcut.lnk -> Others
+Moved WhatsApp Image 2026-06-08 at 5.45.52 PM - Shortcut.lnk -> Others
+Moved WhatsApp Image 2026-06-08 at 5.45.52 PM.jpeg -> Images
+Moved WhatsApp Installer.exe -> Programs
+Moved windows-x64-setup - Shortcut.lnk -> Others
+Moved wp8213495.jpg -> Images
+Moved YBIT Ortho Template 2026.bak -> Others
+Moved YBIT Ortho Template 2026.dwg -> Others
+Moved zip.txt -> Docs
+Moved 🌟 Antashti Prarambh Latest HD Wallpaper 🌟 - Shortcut.lnk -> Others
+Moved 🌟 Antashti Prarambh Latest HD Wallpaper 🌟.jpg -> Images
+Total files moved: 71
+===== Run Finished =====
