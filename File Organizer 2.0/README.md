@@ -171,7 +171,7 @@ pyinstaller --onefile --windowed --name="FileOrganizer" main.py
 
 ## 👨‍💻 Author
 
-**Abhijeet Sanjay Pirankar**
+**Abhijeet Pirankar**
 
 ---
 
