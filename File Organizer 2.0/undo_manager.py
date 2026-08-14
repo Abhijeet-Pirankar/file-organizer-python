@@ -37,6 +37,9 @@ class UndoSession:
     session_id: str           # ISO timestamp used as unique key
     folder: str               # the folder that was organized
     records: List[UndoRecord]
+    errors: int = 0
+    duplicates: int = 0
+    skipped: int = 0
 
 
 # ── UndoManager ──────────────────────────────────────────────────────────────
@@ -75,7 +78,7 @@ class UndoManager:
             )
         )
 
-    def commit_session(self) -> None:
+    def commit_session(self, errors: int = 0, duplicates: int = 0, skipped: int = 0) -> None:
         """
         Finalize the current session and persist it to disk.
         Keeps the 10 most recent sessions in history.
@@ -83,10 +86,17 @@ class UndoManager:
         if self._current_session is None:
             return
 
+        self._current_session.errors = errors
+        self._current_session.duplicates = duplicates
+        self._current_session.skipped = skipped
+
         session_dict = {
             "session_id": self._current_session.session_id,
             "folder": self._current_session.folder,
             "records": [asdict(r) for r in self._current_session.records],
+            "errors": errors,
+            "duplicates": duplicates,
+            "skipped": skipped
         }
 
         self._all_sessions.append(session_dict)
@@ -114,8 +124,25 @@ class UndoManager:
         return {
             "session_id": s["session_id"],
             "folder": s["folder"],
-            "file_count": len(s["records"]),
+            "file_count": len(s.get("records", [])),
+            "errors": s.get("errors", 0),
+            "duplicates": s.get("duplicates", 0),
+            "skipped": s.get("skipped", 0)
         }
+
+    def get_all_sessions_summary(self) -> List[dict]:
+        """Return metadata for all sessions in history."""
+        summaries = []
+        for s in reversed(self._all_sessions):
+            summaries.append({
+                "session_id": s["session_id"],
+                "folder": s["folder"],
+                "file_count": len(s.get("records", [])),
+                "errors": s.get("errors", 0),
+                "duplicates": s.get("duplicates", 0),
+                "skipped": s.get("skipped", 0)
+            })
+        return summaries
 
     def undo_last(
         self,

@@ -19,7 +19,14 @@ DEFAULT_SETTINGS: Dict[str, Any] = {
     "include_subfolders": False,       # recursive scan toggle
     "watch_folder": False,             # auto-monitor toggle
     "last_folder": "",                 # remember last used folder
-    "custom_categories": {}            # user-added extension overrides
+    "custom_categories": {},           # user-added extension overrides
+    "confirm_organize": True,          # confirm before organizing
+    "show_notifications": True,        # show notifications
+    "duplicate_action": "keep_both",   # "skip" | "keep_both" | "ask"
+    "watch_folder_path": "",           # saved watch folder path
+    "watch_auto_organize": True,       # auto organize new files in watch mode
+    "watch_notifications": True,       # notifications in watch mode
+    "organization_rules": []           # custom rules list
 }
 
 # Config directory lives in the user's home folder
