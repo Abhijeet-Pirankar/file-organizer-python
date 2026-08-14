@@ -40,27 +40,27 @@ from organizer import DuplicateAction, FilePreview
 # ── Theme & palette ───────────────────────────────────────────────────────────
 
 PALETTE = {
-    "bg":          "#0a0c16",
-    "surface":     "#16192b",
-    "surface2":    "#1d2238",
-    "accent":      "#4f8ef7",
-    "accent_hover":"#3a7ae0",
-    "success":     "#27c96b",
-    "warning":     "#f5a623",
-    "danger":      "#e05252",
-    "text":        "#f8f9fa",
-    "text_dim":    "#a0a5b8",
-    "border":      "#2a2d45",
-    "border_light":"#3b3f5c",
-    "card_images": "#4f8ef7",
-    "card_pdfs":   "#e05252",
-    "card_videos": "#9b59b6",
-    "card_docs":   "#27c96b",
-    "card_music":  "#f5a623",
-    "card_archives":"#1abc9c",
-    "card_programs":"#e67e22",
-    "card_code":   "#3498db",
-    "card_others": "#7f8c8d",
+    "bg":          "#03050c",      # Very deep dark background (Layer 1)
+    "surface":     "#0f1322",      # Frosted glass panel color (Layer 3)
+    "surface2":    "#151a30",      # Lighter nested surface
+    "accent":      "#00e1ff",      # Cyan/electric blue accent
+    "accent_hover":"#00b4cc",
+    "success":     "#00e676",      # Vibrant neon green
+    "warning":     "#ff9100",      # Vibrant orange/amber
+    "danger":      "#ff1744",      # Vibrant red
+    "text":        "#ffffff",
+    "text_dim":    "#7a84a6",      # Muted blue-grey
+    "border":      "#1f253d",      # Subtly glowing dark border
+    "border_light":"#2d3b6e",      # Brighter glowing border
+    "card_images": "#2979ff",
+    "card_pdfs":   "#ff1744",
+    "card_videos": "#d500f9",
+    "card_docs":   "#00e676",
+    "card_music":  "#ff9100",
+    "card_archives":"#ffea00",
+    "card_programs":"#f50057",
+    "card_code":   "#00e1ff",
+    "card_others": "#9e9e9e",
 }
 
 CATEGORY_COLORS = {
@@ -145,15 +145,28 @@ class GlassCard(ctk.CTkFrame):
 
 # ── Helper widgets ────────────────────────────────────────────────────────────
 
-def _make_stat_card(parent, label: str, value: str, color: str) -> GlassCard:
-    """Glass-style compact stat card widget."""
-    frame = GlassCard(parent, border_color=color, border_width=1)
-    lbl = ctk.CTkLabel(frame, text=label, font=("Segoe UI", 12),
-                        text_color=PALETTE["text_dim"])
-    lbl.pack(padx=12, pady=(12, 0))
+def _make_stat_card(parent, icon: str, label: str, value: str, color: str) -> ctk.CTkFrame:
+    """Glass-style premium stat card widget with icon."""
+    # Outer frame for border glow
+    frame = ctk.CTkFrame(parent, fg_color=PALETTE["surface"],
+                         border_color=color, border_width=1, corner_radius=12)
+    
+    # Top row: icon + label
+    top = ctk.CTkFrame(frame, fg_color="transparent")
+    top.pack(fill="x", padx=14, pady=(14, 4))
+    
+    icon_lbl = ctk.CTkLabel(top, text=icon, font=("Segoe UI", 14), text_color=color)
+    icon_lbl.pack(side="left", padx=(0, 6))
+    
+    lbl = ctk.CTkLabel(top, text=label, font=("Segoe UI", 12),
+                       text_color=PALETTE["text_dim"])
+    lbl.pack(side="left")
+    
+    # Value
     val = ctk.CTkLabel(frame, text=value, font=("Segoe UI", 28, "bold"),
-                        text_color=color)
-    val.pack(padx=12, pady=(4, 12))
+                       text_color=PALETTE["text"])
+    val.pack(padx=14, pady=(0, 16))
+    
     frame._val_label = val   # store reference for updates
     return frame
 
@@ -572,17 +585,17 @@ class BarChart(tk.Canvas):
             return
 
         n = len(cats)
-        bar_h = 16
+        n = len(cats)
+        bar_h = 6
         label_w = 90
         pad = 12
         
-        required_h = n * (bar_h + 8) + pad * 2 + 8
+        required_h = n * (bar_h + 16) + pad * 2
         if h < required_h:
             self.configure(height=required_h)
             h = required_h
 
-        y = pad + 4
-        r = bar_h // 2
+        y = pad + 8
 
         for cat in cats:
             val = self._data[cat]
@@ -593,39 +606,27 @@ class BarChart(tk.Canvas):
             # Label
             self.create_text(
                 pad, y + bar_h // 2,
-                text=f"{CATEGORY_ICONS.get(cat, chr(8226))} {cat}",
-                anchor="w", fill=PALETTE["text_dim"],
-                font=("Segoe UI", 9),
+                text=f"{CATEGORY_ICONS.get(cat, chr(8226))}  {cat}",
+                anchor="w", fill=PALETTE["text"],
+                font=("Segoe UI", 10),
             )
-            # Bar background (rounded pill)
+            # Bar background (thin track)
             x0, x1 = label_w, label_w + bar_max_w
-            if x1 - x0 > 2 * r:
-                self.create_rectangle(x0 + r, y, x1 - r, y + bar_h,
-                                      fill=PALETTE["border"], outline="")
-                self.create_oval(x0, y, x0 + 2 * r, y + bar_h,
-                                 fill=PALETTE["border"], outline="")
-                self.create_oval(x1 - 2 * r, y, x1, y + bar_h,
-                                 fill=PALETTE["border"], outline="")
-            # Bar fill (rounded pill)
-            if bar_w > 2 * r:
-                fx0, fx1 = label_w, label_w + bar_w
-                self.create_rectangle(fx0 + r, y, fx1 - r, y + bar_h,
-                                      fill=color, outline="")
-                self.create_oval(fx0, y, fx0 + 2 * r, y + bar_h,
-                                 fill=color, outline="")
-                self.create_oval(fx1 - 2 * r, y, fx1, y + bar_h,
-                                 fill=color, outline="")
-            elif bar_w > 0:
-                self.create_oval(label_w, y, label_w + bar_h, y + bar_h,
-                                 fill=color, outline="")
+            self.create_rectangle(x0, y, x1, y + bar_h, fill=PALETTE["border"], outline="", width=0)
+            
+            # Bar fill (thin glowing track)
+            if bar_w > 0:
+                self.create_rectangle(label_w, y, label_w + bar_w, y + bar_h, fill=color, outline="", width=0)
+                
             # Value label in accent color
             self.create_text(
-                label_w + bar_max_w + 6, y + bar_h // 2,
-                text=str(val), anchor="w",
+                label_w + bar_max_w + 12, y + bar_h // 2,
+                text=str(val), anchor="e",
                 fill=color,
-                font=("Segoe UI", 9, "bold"),
+                font=("Segoe UI", 10),
             )
-            y += bar_h + 8
+            y += bar_h + 16
+
 
 
 
@@ -648,9 +649,12 @@ class App:
 
         self.bg_canvas = tk.Canvas(self.root, bg=PALETTE["bg"], highlightthickness=0)
         self.bg_canvas.place(x=0, y=0, relwidth=1, relheight=1)
-        self.bg_canvas.create_oval(-200, -200, 700, 700, fill="#12182b", outline="")
-        self.bg_canvas.create_oval(800, 300, 1500, 1000, fill="#161226", outline="")
-        self.bg_canvas.create_oval(100, 500, 700, 1100, fill="#0d1b26", outline="")
+        # Create very soft, large colored blobs to simulate deep ambient lighting
+        self.bg_canvas.create_oval(-300, -200, 700, 700, fill="#080c21", outline="")
+        self.bg_canvas.create_oval(200, -100, 900, 600, fill="#06091c", outline="")
+        self.bg_canvas.create_oval(600, 300, 1500, 1200, fill="#0b071e", outline="")
+        self.bg_canvas.create_oval(50, 500, 750, 1300, fill="#040f1a", outline="")
+        self.bg_canvas.create_oval(800, -50, 1800, 800, fill="#050817", outline="")
 
         self.undo_mgr = undo_module.UndoManager()
         self.monitor: Optional[FolderMonitor] = None
@@ -675,24 +679,25 @@ class App:
         self._build_main_area()
 
     def _build_header(self) -> None:
-        hdr = GlassPanel(self.root, height=72, corner_radius=16)
-        hdr.pack(fill="x", side="top", padx=16, pady=(16, 8))
+        hdr = GlassPanel(self.root, height=80, corner_radius=12)
+        hdr.pack(fill="x", side="top", padx=20, pady=(20, 10))
         hdr.pack_propagate(False)
 
         # Left: logo + title
         left = ctk.CTkFrame(hdr, fg_color="transparent")
-        left.pack(side="left", padx=24, pady=12)
+        left.pack(side="left", padx=24, pady=16)
         
         icon_frame = ctk.CTkFrame(left, fg_color="transparent")
-        icon_frame.pack(side="left", padx=(0, 14))
-        # Subtle drop shadow/glow for icon
-        ctk.CTkLabel(icon_frame, text="◈", font=("Segoe UI", 36), text_color="#1a3b7c").place(x=2, y=2)
-        ctk.CTkLabel(icon_frame, text="◈", font=("Segoe UI", 36), text_color=PALETTE["accent"]).pack()
+        icon_frame.pack(side="left", padx=(0, 18))
+        
+        # Glowing icon effect
+        ctk.CTkLabel(icon_frame, text="📁", font=("Segoe UI", 38), text_color="#184b9c").place(x=2, y=2)
+        ctk.CTkLabel(icon_frame, text="📁", font=("Segoe UI", 38), text_color=PALETTE["accent"]).pack()
         
         title_col = ctk.CTkFrame(left, fg_color="transparent")
         title_col.pack(side="left")
         ctk.CTkLabel(title_col, text="Advanced File Organizer",
-                     font=("Segoe UI", 20, "bold"),
+                     font=("Segoe UI", 22, "bold"),
                      text_color=PALETTE["text"]).pack(anchor="w", pady=(0, 2))
         ctk.CTkLabel(title_col, text="v2.0  •  Smart & Safe File Management",
                      font=("Segoe UI", 12),
@@ -702,47 +707,54 @@ class App:
         right_frame = ctk.CTkFrame(hdr, fg_color="transparent")
         right_frame.pack(side="right", padx=24)
         
-        self.header_status = ctk.CTkLabel(right_frame, text="● Ready", font=("Segoe UI", 12), text_color=PALETTE["text_dim"])
+        self.header_status = ctk.CTkLabel(right_frame, text="● Ready", font=("Segoe UI", 12), text_color=PALETTE["success"])
         self.header_status.pack(side="right", padx=(16, 0))
         
         self.watch_indicator = ctk.CTkLabel(right_frame, text="",
                                             font=("Segoe UI", 12),
-                                            text_color=PALETTE["success"])
+                                            text_color=PALETTE["accent"])
         self.watch_indicator.pack(side="right")
 
     def _build_folder_row(self) -> None:
-        row = GlassPanel(self.root)
-        row.pack(fill="x", padx=16, pady=4)
+        row = GlassPanel(self.root, corner_radius=12)
+        row.pack(fill="x", padx=20, pady=4)
         row.columnconfigure(1, weight=1)
 
-        ctk.CTkLabel(row, text="📁  Folder to Organize:",
+        ctk.CTkLabel(row, text="📁 Folder to Organize:",
                      font=("Segoe UI", 13),
-                     text_color=PALETTE["text"]).grid(row=0, column=0, padx=(16, 8), pady=(16, 4), sticky="w")
+                     text_color=PALETTE["text_dim"]).grid(row=0, column=0, padx=(24, 12), pady=(18, 4), sticky="w")
 
-        self.folder_entry = GlassEntry(
+        # Make entry look like a translucent inner field
+        self.folder_entry = ctk.CTkEntry(
             row,
-            placeholder_text="Select or type a folder path…",
+            placeholder_text="C:/...",
             height=38,
+            fg_color=PALETTE["surface2"],
+            border_color=PALETTE["border"],
+            border_width=1,
+            corner_radius=8,
+            text_color=PALETTE["text"]
         )
-        self.folder_entry.grid(row=0, column=1, padx=(0, 8), pady=(16, 4), sticky="ew")
+        self.folder_entry.grid(row=0, column=1, padx=(0, 12), pady=(18, 4), sticky="ew")
 
         ctk.CTkButton(
             row, text="Browse",
-            fg_color=PALETTE["surface2"],
-            hover_color=PALETTE["border_light"],
-            border_color=PALETTE["border"],
+            fg_color="#1e2540",
+            hover_color="#2a355c",
+            border_color="#303c66",
             border_width=1,
-            text_color=PALETTE["text"],
+            text_color=PALETTE["accent"],
             font=("Segoe UI", 12, "bold"),
             width=90, height=38,
+            corner_radius=8,
             command=self._browse,
-        ).grid(row=0, column=2, padx=(0, 16), pady=(16, 4))
+        ).grid(row=0, column=2, padx=(0, 24), pady=(18, 4))
         
         ctk.CTkCheckBox(
             row,
             text="Include Subfolders (recursive)",
             variable=self.recursive_var,
-            font=("Segoe UI", 11),
+            font=("Segoe UI", 12),
             text_color=PALETTE["text_dim"],
             fg_color=PALETTE["accent"],
             hover_color=PALETTE["accent_hover"],
@@ -750,61 +762,63 @@ class App:
             border_color=PALETTE["border"],
             corner_radius=4,
             checkbox_width=20, checkbox_height=20
-        ).grid(row=1, column=1, padx=(0, 8), pady=(4, 16), sticky="w")
+        ).grid(row=1, column=1, padx=(0, 12), pady=(4, 18), sticky="w")
 
     def _build_options_row(self) -> None:
         pass
 
     def _build_action_bar(self) -> None:
-        bar = GlassPanel(self.root)
-        bar.pack(fill="x", padx=16, pady=4)
+        bar = GlassPanel(self.root, corner_radius=12)
+        bar.pack(fill="x", padx=20, pady=4)
 
         # Center the buttons
         btn_container = ctk.CTkFrame(bar, fg_color="transparent")
-        btn_container.pack(expand=True, padx=4, pady=8)
+        btn_container.pack(expand=True, padx=4, pady=12)
 
         btn_config = [
-            ("🔍  Analyze",   PALETTE["surface2"],  PALETTE["border_light"],     self._run_analyze, "Preview files without moving them"),
-            ("👁  Preview",   PALETTE["surface2"],  PALETTE["border_light"], self._run_preview, "Detailed file preview before organizing"),
-            ("⚡  Organize",  PALETTE["accent"],    PALETTE["accent_hover"],             self._run_organize, "Move files into category folders"),
-            ("↩  Undo",       PALETTE["surface2"],  "#382d23",             self._run_undo, "Restore files from the last session"),
-            ("◉  Watch",    PALETTE["surface2"],  PALETTE["border_light"],     self._toggle_watch, "Monitor folder for new files"),
-            ("🕰  Activity",   PALETTE["surface2"],  PALETTE["border_light"],     self._open_activity, "View recent organization activity"),
-            ("⚙  Settings",  PALETTE["surface2"],  PALETTE["border_light"],     self._open_settings, "Configure application behavior"),
+            ("🔍 Analyze",   "transparent",         PALETTE["border_light"],     self._run_analyze, "Preview files without moving them"),
+            ("👁 Preview",   "transparent",         PALETTE["border_light"], self._run_preview, "Detailed file preview before organizing"),
+            ("⚡ Organize",  PALETTE["accent"],    PALETTE["accent_hover"],             self._run_organize, "Move files into category folders"),
+            ("↩ Undo",       "transparent",         PALETTE["border_light"],             self._run_undo, "Restore files from the last session"),
+            ("◉ Watch",    "transparent",         PALETTE["border_light"],     self._toggle_watch, "Monitor folder for new files"),
+            ("📊 Activity",   "transparent",         PALETTE["border_light"],     self._open_activity, "View recent organization activity"),
+            ("⚙ Settings",  "transparent",         PALETTE["border_light"],     self._open_settings, "Configure application behavior"),
         ]
 
         for text, fg, hover, cmd, tooltip_text in btn_config:
             is_watch = "Watch" in text
             is_organize = "Organize" in text
-            is_undo = "Undo" in text
             
-            border_col = PALETTE["accent"] if is_organize else (PALETTE["warning"] if is_undo else PALETTE["border"])
-            if is_undo: border_col = "#4a3c26"
+            # Subtle border for normal buttons, bright accent for organize
+            border_col = PALETTE["accent"] if is_organize else PALETTE["border"]
+            btn_fg = fg if is_organize else PALETTE["surface2"]
+            text_color = "#ffffff" if is_organize else PALETTE["text"]
             
             btn = GlassButton(
                 btn_container,
                 text=text,
-                fg_color=fg,
+                fg_color=btn_fg,
                 hover_color=hover,
-                text_color=PALETTE["text"] if not is_organize else "#ffffff",
+                text_color=text_color,
                 border_color=border_col,
-                height=36,
+                height=40,
+                corner_radius=8,
                 command=cmd,
             )
-            btn.pack(side="left", padx=6, pady=2)
+            btn.pack(side="left", padx=8, pady=2)
             if is_watch:
                 self.watch_btn = btn
             ToolTip(btn, tooltip_text)
 
     def _build_progress_row(self) -> None:
-        row = GlassPanel(self.root, corner_radius=10)
-        row.pack(fill="x", padx=16, pady=4)
+        row = GlassPanel(self.root, corner_radius=12)
+        row.pack(fill="x", padx=20, pady=4)
 
         inner = ctk.CTkFrame(row, fg_color="transparent")
-        inner.pack(fill="x", padx=16, pady=(10, 4))
+        inner.pack(fill="x", padx=20, pady=(12, 8))
 
         self.status_label = ctk.CTkLabel(
-            inner, text="● Ready",
+            inner, text="✓ Ready",
             font=("Segoe UI", 12),
             text_color=PALETTE["text_dim"],
             anchor="w",
@@ -813,15 +827,16 @@ class App:
 
         self.progress_pct = ctk.CTkLabel(
             inner, text="0%",
-            font=("Segoe UI", 11, "bold"),
-            text_color=PALETTE["text_dim"],
+            font=("Segoe UI", 12, "bold"),
+            text_color=PALETTE["text"],
             anchor="e"
         )
         self.progress_pct.pack(side="right")
 
-        self.progress_bar = GlassProgressBar(row, height=4, corner_radius=2)
+        # Extremely thin, glowing progress line
+        self.progress_bar = GlassProgressBar(row, height=2, corner_radius=0, border_width=0, progress_color=PALETTE["accent"])
         self.progress_bar.set(0)
-        self.progress_bar.pack(fill="x", padx=16, pady=(0, 12))
+        self.progress_bar.pack(fill="x", padx=20, pady=(0, 16))
 
     def _build_main_area(self) -> None:
         """Two-column layout: preview panel (left) + stats dashboard (right)."""
@@ -868,14 +883,16 @@ class App:
         self.filter_menu.pack(side="right")
 
         # Column headers
-        col_hdr = ctk.CTkFrame(frame, fg_color=PALETTE["surface2"],
-                               corner_radius=6)
-        col_hdr.pack(fill="x", padx=12, pady=(8, 0))
+        col_hdr = ctk.CTkFrame(frame, fg_color="transparent")
+        col_hdr.pack(fill="x", padx=12, pady=(12, 0))
         for text, w in [("File Name", 190), ("Size", 60), ("→", 20), ("Category", 100), ("Status", 110)]:
             ctk.CTkLabel(col_hdr, text=text, width=w,
-                         font=("Segoe UI", 11, "bold"),
-                         text_color=PALETTE["text_dim"],
-                         anchor="w").pack(side="left", padx=6, pady=4)
+                         font=("Segoe UI", 11),
+                         text_color=PALETTE["text"],
+                         anchor="w").pack(side="left", padx=6, pady=2)
+        
+        sep = ctk.CTkFrame(frame, fg_color=PALETTE["border"], height=1)
+        sep.pack(fill="x", padx=12, pady=(2, 4))
 
         # Scrollable file list
         self.preview_scroll = ctk.CTkScrollableFrame(
@@ -886,35 +903,37 @@ class App:
         self.preview_scroll.pack(fill="both", expand=True, padx=12, pady=(4, 12))
 
     def _build_stats_panel(self, parent) -> None:
-        frame = GlassPanel(parent)
-        frame.grid(row=0, column=1, sticky="nsew", padx=(8, 0))
+        frame = GlassPanel(parent, corner_radius=12)
+        frame.grid(row=0, column=1, sticky="nsew", padx=(10, 0))
 
-        ctk.CTkLabel(frame, text="📊  Statistics",
+        hdr = ctk.CTkFrame(frame, fg_color="transparent")
+        hdr.pack(fill="x", padx=20, pady=(16, 12))
+        ctk.CTkLabel(hdr, text="📊 Statistics",
                      font=("Segoe UI", 14, "bold"),
-                     text_color=PALETTE["text"]).pack(anchor="w", padx=16, pady=(12, 8))
+                     text_color=PALETTE["text"]).pack(side="left")
 
         # ── Summary stat cards ────────────────────────────────────────────
         cards_frame = ctk.CTkFrame(frame, fg_color="transparent")
-        cards_frame.pack(fill="x", padx=12, pady=(0, 8))
+        cards_frame.pack(fill="x", padx=16, pady=(0, 8))
         cards_frame.columnconfigure((0, 1), weight=1)
 
-        self.card_total = _make_stat_card(cards_frame, "Total Files", "0", PALETTE["text_dim"])
-        self.card_total.grid(row=0, column=0, padx=4, pady=4, sticky="ew")
+        self.card_total = _make_stat_card(cards_frame, "📄", "Total Files", "0", PALETTE["accent"])
+        self.card_total.grid(row=0, column=0, padx=6, pady=6, sticky="ew")
 
-        self.card_moved = _make_stat_card(cards_frame, "Organized", "0", PALETTE["success"])
-        self.card_moved.grid(row=0, column=1, padx=4, pady=4, sticky="ew")
+        self.card_moved = _make_stat_card(cards_frame, "✓", "Organized", "0", PALETTE["success"])
+        self.card_moved.grid(row=0, column=1, padx=6, pady=6, sticky="ew")
 
-        self.card_dups = _make_stat_card(cards_frame, "Duplicates", "0", PALETTE["warning"])
-        self.card_dups.grid(row=1, column=0, padx=4, pady=4, sticky="ew")
+        self.card_dups = _make_stat_card(cards_frame, "◇", "Duplicates", "0", PALETTE["warning"])
+        self.card_dups.grid(row=1, column=0, padx=6, pady=6, sticky="ew")
 
-        self.card_errors = _make_stat_card(cards_frame, "Errors", "0", PALETTE["danger"])
-        self.card_errors.grid(row=1, column=1, padx=4, pady=4, sticky="ew")
+        self.card_errors = _make_stat_card(cards_frame, "⚠", "Errors", "0", PALETTE["danger"])
+        self.card_errors.grid(row=1, column=1, padx=6, pady=6, sticky="ew")
 
-        self.card_others = _make_stat_card(cards_frame, "Others", "0", PALETTE["card_others"])
-        self.card_others.grid(row=2, column=0, padx=4, pady=4, sticky="ew")
+        self.card_others = _make_stat_card(cards_frame, "📁", "Others", "0", PALETTE["text_dim"])
+        self.card_others.grid(row=2, column=0, padx=6, pady=6, sticky="ew")
 
-        self.card_size = _make_stat_card(cards_frame, "Total Size", "0 B", PALETTE["text_dim"])
-        self.card_size.grid(row=2, column=1, padx=4, pady=4, sticky="ew")
+        self.card_size = _make_stat_card(cards_frame, "💾", "Total Size", "0 B", PALETTE["accent"])
+        self.card_size.grid(row=2, column=1, padx=6, pady=6, sticky="ew")
 
         # ── Bar chart ─────────────────────────────────────────────────────
         ctk.CTkLabel(frame, text="Category Breakdown",
@@ -1040,10 +1059,10 @@ class App:
             # Category badge
             cat_color = CATEGORY_COLORS.get(fp.destination_category, PALETTE["text_dim"])
             cat_lbl = ctk.CTkLabel(row,
-                                   text=f"{CATEGORY_ICONS.get(fp.destination_category, '•')} {fp.destination_category}",
+                                   text=f"{CATEGORY_ICONS.get(fp.destination_category, '•')}  {fp.destination_category}",
                                    width=100,
                                    anchor="w",
-                                   font=("Segoe UI", 11, "bold"),
+                                   font=("Segoe UI", 11),
                                    text_color=cat_color)
             cat_lbl.pack(side="left", padx=4)
 
