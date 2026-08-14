@@ -25,6 +25,9 @@ except ImportError:
 
 import categories
 import organizer as org_module
+import config_manager
+
+_global_monitor = None
 
 
 # ── Event Handler ─────────────────────────────────────────────────────────────
@@ -83,9 +86,15 @@ class _OrganizerEventHandler(FileSystemEventHandler if WATCHDOG_AVAILABLE else o
 
     def _organize_single_file(self, file_path: Path) -> None:
         """Move one file into the correct category folder."""
+        auto_org = config_manager.get("watch_auto_organize", True)
+        
         cats = categories.get_categories()
         ext = file_path.suffix.lower()
-        cat = categories.get_category_for_extension(ext, cats)
+        cat = categories.get_category_for_file(file_path.name, ext, cats)
+
+        if not auto_org:
+            self.on_file_organized(file_path.name, f"DETECTED ({cat})")
+            return
 
         dest_dir = self.watch_folder / cat
         dest_dir.mkdir(parents=True, exist_ok=True)
@@ -146,8 +155,14 @@ class FolderMonitor:
 
     def start(self) -> None:
         """Start the background observer thread."""
+        global _global_monitor
+        if _global_monitor is not None and _global_monitor is not self:
+            _global_monitor.stop()
+            
         if self._running:
             return
+
+        _global_monitor = self
 
         handler = _OrganizerEventHandler(
             watch_folder=self.folder,
@@ -161,9 +176,12 @@ class FolderMonitor:
 
     def stop(self) -> None:
         """Stop the observer thread gracefully."""
+        global _global_monitor
         if not self._running or self._observer is None:
             return
         self._observer.stop()
         self._observer.join(timeout=5)
         self._observer = None
         self._running = False
+        if _global_monitor is self:
+            _global_monitor = None

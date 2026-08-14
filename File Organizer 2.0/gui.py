@@ -40,17 +40,18 @@ from organizer import DuplicateAction, FilePreview
 # ── Theme & palette ───────────────────────────────────────────────────────────
 
 PALETTE = {
-    "bg":          "#0f1117",
-    "surface":     "#1a1d27",
-    "surface2":    "#22263a",
+    "bg":          "#0a0c16",
+    "surface":     "#16192b",
+    "surface2":    "#1d2238",
     "accent":      "#4f8ef7",
     "accent_hover":"#3a7ae0",
     "success":     "#27c96b",
     "warning":     "#f5a623",
     "danger":      "#e05252",
-    "text":        "#e8eaf0",
-    "text_dim":    "#8a8fa8",
-    "border":      "#2d3148",
+    "text":        "#f8f9fa",
+    "text_dim":    "#a0a5b8",
+    "border":      "#2a2d45",
+    "border_light":"#3b3f5c",
     "card_images": "#4f8ef7",
     "card_pdfs":   "#e05252",
     "card_videos": "#9b59b6",
@@ -86,130 +87,179 @@ CATEGORY_ICONS = {
     "Others":   "📦",
 }
 
+# ── Glassmorphism Components ──────────────────────────────────────────────────
+
+class GlassPanel(ctk.CTkFrame):
+    def __init__(self, parent, **kwargs):
+        kwargs.setdefault("fg_color", PALETTE["surface"])
+        kwargs.setdefault("border_color", PALETTE["border"])
+        kwargs.setdefault("border_width", 1)
+        kwargs.setdefault("corner_radius", 14)
+        super().__init__(parent, **kwargs)
+
+class GlassButton(ctk.CTkButton):
+    def __init__(self, parent, **kwargs):
+        kwargs.setdefault("fg_color", PALETTE["surface2"])
+        kwargs.setdefault("hover_color", PALETTE["border_light"])
+        kwargs.setdefault("border_color", PALETTE["border"])
+        kwargs.setdefault("border_width", 1)
+        kwargs.setdefault("corner_radius", 8)
+        kwargs.setdefault("text_color", PALETTE["text"])
+        kwargs.setdefault("font", ("Segoe UI", 12, "bold"))
+        super().__init__(parent, **kwargs)
+
+class GlassEntry(ctk.CTkEntry):
+    def __init__(self, parent, **kwargs):
+        kwargs.setdefault("fg_color", PALETTE["surface2"])
+        kwargs.setdefault("border_color", PALETTE["border"])
+        kwargs.setdefault("border_width", 1)
+        kwargs.setdefault("corner_radius", 8)
+        kwargs.setdefault("text_color", PALETTE["text"])
+        super().__init__(parent, **kwargs)
+        self.bind("<FocusIn>", self._on_focus)
+        self.bind("<FocusOut>", self._on_unfocus)
+
+    def _on_focus(self, event):
+        self.configure(border_color=PALETTE["accent"])
+
+    def _on_unfocus(self, event):
+        self.configure(border_color=PALETTE["border"])
+
+class GlassProgressBar(ctk.CTkProgressBar):
+    def __init__(self, parent, **kwargs):
+        kwargs.setdefault("fg_color", PALETTE["surface2"])
+        kwargs.setdefault("progress_color", PALETTE["accent"])
+        kwargs.setdefault("border_color", PALETTE["border"])
+        kwargs.setdefault("border_width", 1)
+        kwargs.setdefault("corner_radius", 4)
+        super().__init__(parent, **kwargs)
+
+class GlassCard(ctk.CTkFrame):
+    def __init__(self, parent, **kwargs):
+        kwargs.setdefault("fg_color", PALETTE["surface2"])
+        kwargs.setdefault("border_color", PALETTE["border"])
+        kwargs.setdefault("border_width", 1)
+        kwargs.setdefault("corner_radius", 10)
+        super().__init__(parent, **kwargs)
+
 
 # ── Helper widgets ────────────────────────────────────────────────────────────
 
-def _make_stat_card(parent, label: str, value: str, color: str) -> ctk.CTkFrame:
-    """Compact colored stat card widget."""
-    frame = ctk.CTkFrame(parent, fg_color=PALETTE["surface2"],
-                         corner_radius=10, border_width=2,
-                         border_color=color)
-    lbl = ctk.CTkLabel(frame, text=label, font=("Segoe UI", 11),
+def _make_stat_card(parent, label: str, value: str, color: str) -> GlassCard:
+    """Glass-style compact stat card widget."""
+    frame = GlassCard(parent, border_color=color, border_width=1)
+    lbl = ctk.CTkLabel(frame, text=label, font=("Segoe UI", 12),
                         text_color=PALETTE["text_dim"])
-    lbl.pack(padx=12, pady=(10, 0))
-    val = ctk.CTkLabel(frame, text=value, font=("Segoe UI", 22, "bold"),
+    lbl.pack(padx=12, pady=(12, 0))
+    val = ctk.CTkLabel(frame, text=value, font=("Segoe UI", 28, "bold"),
                         text_color=color)
-    val.pack(padx=12, pady=(0, 10))
+    val.pack(padx=12, pady=(4, 12))
     frame._val_label = val   # store reference for updates
     return frame
+
+
+def format_size(size_bytes: int) -> str:
+    """Format bytes to a human readable string."""
+    if size_bytes == 0:
+        return "0 B"
+    units = ["B", "KB", "MB", "GB", "TB"]
+    i = 0
+    size = float(size_bytes)
+    while size >= 1024 and i < len(units) - 1:
+        size /= 1024.0
+        i += 1
+    if i == 0:
+        return f"{int(size)} {units[i]}"
+    return f"{size:.1f} {units[i]}"
+
+
+class ToolTip:
+    """Simple tooltip implementation for Tkinter/CustomTkinter widgets."""
+    def __init__(self, widget, text):
+        self.widget = widget
+        self.text = text
+        self.tooltip_window = None
+        self.id = None
+        self.widget.bind("<Enter>", self.enter)
+        self.widget.bind("<Leave>", self.leave)
+
+    def enter(self, event=None):
+        self.schedule()
+
+    def leave(self, event=None):
+        self.unschedule()
+        self.hide_tip()
+
+    def schedule(self):
+        self.unschedule()
+        self.id = self.widget.after(500, self.show_tip)
+
+    def unschedule(self):
+        id_ = self.id
+        self.id = None
+        if id_:
+            self.widget.after_cancel(id_)
+
+    def show_tip(self):
+        if self.tooltip_window or not self.text:
+            return
+        x = self.widget.winfo_rootx() + 25
+        y = self.widget.winfo_rooty() + 25
+        self.tooltip_window = tw = tk.Toplevel(self.widget)
+        tw.wm_overrideredirect(True)
+        tw.wm_geometry(f"+{x}+{y}")
+        label = tk.Label(tw, text=self.text, justify='left',
+                         background="#ffffe0", relief='solid', borderwidth=1,
+                         font=("Segoe UI", 9))
+        label.pack(ipadx=4, ipady=2)
+
+    def hide_tip(self):
+        tw = self.tooltip_window
+        self.tooltip_window = None
+        if tw:
+            tw.destroy()
 
 
 # ── Settings Dialog ───────────────────────────────────────────────────────────
 
 class SettingsDialog(ctk.CTkToplevel):
-    """Modal settings window for theme, recursive scan, and custom categories."""
+    """Modal settings window with a tabbed interface."""
 
     def __init__(self, parent: "App") -> None:
         super().__init__(parent.root)
         self.parent_app = parent
         self.title("Settings")
-        self.geometry("560x620")
+        self.geometry("640x700")
         self.resizable(False, False)
         self.configure(fg_color=PALETTE["bg"])
         self.grab_set()
 
-        settings = config_manager.load_settings()
+        self.settings = config_manager.load_settings()
 
         # ── Title ─────────────────────────────────────────────────────────
         ctk.CTkLabel(self, text="⚙  Settings",
                      font=("Segoe UI", 18, "bold"),
-                     text_color=PALETTE["text"]).pack(pady=(20, 4))
-        ctk.CTkLabel(self, text="Changes are saved automatically.",
+                     text_color=PALETTE["text"]).pack(pady=(16, 4))
+        ctk.CTkLabel(self, text="Configure how the organizer behaves.",
                      font=("Segoe UI", 12),
-                     text_color=PALETTE["text_dim"]).pack(pady=(0, 16))
+                     text_color=PALETTE["text_dim"]).pack(pady=(0, 12))
 
-        # ── Appearance ────────────────────────────────────────────────────
-        section = ctk.CTkFrame(self, fg_color=PALETTE["surface"],
-                               corner_radius=12)
-        section.pack(fill="x", padx=24, pady=6)
-        ctk.CTkLabel(section, text="Appearance",
-                     font=("Segoe UI", 13, "bold"),
-                     text_color=PALETTE["accent"]).pack(anchor="w", padx=16, pady=(12, 4))
+        # ── Tabs ──────────────────────────────────────────────────────────
+        self.tabview = ctk.CTkTabview(self, width=580, height=480,
+                                      fg_color=PALETTE["surface"],
+                                      segmented_button_selected_color=PALETTE["accent"],
+                                      segmented_button_selected_hover_color=PALETTE["accent_hover"])
+        self.tabview.pack(padx=20, pady=10, fill="both", expand=True)
 
-        row = ctk.CTkFrame(section, fg_color="transparent")
-        row.pack(fill="x", padx=16, pady=(0, 12))
-        ctk.CTkLabel(row, text="Theme:", font=("Segoe UI", 12),
-                     text_color=PALETTE["text"]).pack(side="left")
-        self.theme_var = ctk.StringVar(value=settings.get("theme", "dark"))
-        ctk.CTkOptionMenu(row, values=["dark", "light"], variable=self.theme_var,
-                          fg_color=PALETTE["surface2"],
-                          button_color=PALETTE["accent"],
-                          command=self._on_theme_change).pack(side="right")
+        self.tabview.add("General")
+        self.tabview.add("File Organization")
+        self.tabview.add("Duplicate Handling")
+        self.tabview.add("Watch Mode")
 
-        # ── Scan Options ──────────────────────────────────────────────────
-        section2 = ctk.CTkFrame(self, fg_color=PALETTE["surface"],
-                                corner_radius=12)
-        section2.pack(fill="x", padx=24, pady=6)
-        ctk.CTkLabel(section2, text="Scan Options",
-                     font=("Segoe UI", 13, "bold"),
-                     text_color=PALETTE["accent"]).pack(anchor="w", padx=16, pady=(12, 4))
-
-        self.recursive_var = ctk.BooleanVar(value=settings.get("include_subfolders", False))
-        ctk.CTkCheckBox(section2, text="Include subfolders (recursive scan)",
-                        variable=self.recursive_var,
-                        font=("Segoe UI", 12),
-                        text_color=PALETTE["text"],
-                        fg_color=PALETTE["accent"],
-                        hover_color=PALETTE["accent_hover"]).pack(anchor="w", padx=16, pady=(0, 12))
-
-        # ── Custom Categories ─────────────────────────────────────────────
-        section3 = ctk.CTkFrame(self, fg_color=PALETTE["surface"],
-                                corner_radius=12)
-        section3.pack(fill="both", expand=True, padx=24, pady=6)
-        ctk.CTkLabel(section3, text="Custom Extensions",
-                     font=("Segoe UI", 13, "bold"),
-                     text_color=PALETTE["accent"]).pack(anchor="w", padx=16, pady=(12, 4))
-        ctk.CTkLabel(section3,
-                     text="Add extensions to categories (comma-separated, e.g. .xyz, .abc)",
-                     font=("Segoe UI", 11),
-                     text_color=PALETTE["text_dim"],
-                     wraplength=480,
-                     justify="left").pack(anchor="w", padx=16, pady=(0, 8))
-
-        # Category selector
-        cat_row = ctk.CTkFrame(section3, fg_color="transparent")
-        cat_row.pack(fill="x", padx=16, pady=(0, 6))
-        ctk.CTkLabel(cat_row, text="Category:", font=("Segoe UI", 12),
-                     text_color=PALETTE["text"]).pack(side="left")
-        all_cats = list(cat_module.DEFAULT_CATEGORIES.keys())
-        self.cat_var = ctk.StringVar(value=all_cats[0])
-        ctk.CTkOptionMenu(cat_row, values=all_cats, variable=self.cat_var,
-                          fg_color=PALETTE["surface2"],
-                          button_color=PALETTE["accent"]).pack(side="right")
-
-        # Extensions entry
-        ext_row = ctk.CTkFrame(section3, fg_color="transparent")
-        ext_row.pack(fill="x", padx=16, pady=(0, 6))
-        ctk.CTkLabel(ext_row, text="Extensions:", font=("Segoe UI", 12),
-                     text_color=PALETTE["text"]).pack(side="left")
-        self.ext_entry = ctk.CTkEntry(ext_row, placeholder_text=".xyz, .abc",
-                                      fg_color=PALETTE["surface2"],
-                                      border_color=PALETTE["border"],
-                                      text_color=PALETTE["text"])
-        self.ext_entry.pack(side="right", fill="x", expand=True, padx=(8, 0))
-
-        ctk.CTkButton(section3, text="Add Extensions",
-                      fg_color=PALETTE["accent"],
-                      hover_color=PALETTE["accent_hover"],
-                      command=self._add_extensions).pack(padx=16, pady=(0, 8))
-
-        # Display current custom
-        self.custom_display = ctk.CTkTextbox(section3, height=80,
-                                              fg_color=PALETTE["surface2"],
-                                              text_color=PALETTE["text_dim"],
-                                              font=("Consolas", 11))
-        self.custom_display.pack(fill="x", padx=16, pady=(0, 12))
-        self._refresh_custom_display()
+        self._build_general_tab()
+        self._build_file_org_tab()
+        self._build_duplicate_tab()
+        self._build_watch_tab()
 
         # ── Save button ───────────────────────────────────────────────────
         ctk.CTkButton(self, text="✔  Save & Close",
@@ -217,13 +267,123 @@ class SettingsDialog(ctk.CTkToplevel):
                       hover_color="#1ea855",
                       font=("Segoe UI", 13, "bold"),
                       height=40,
-                      command=self._save_and_close).pack(pady=16, padx=24, fill="x")
+                      command=self._save_and_close).pack(pady=(10, 20), padx=24, fill="x")
+
+    def _build_general_tab(self) -> None:
+        tab = self.tabview.tab("General")
+        
+        # Theme
+        row = ctk.CTkFrame(tab, fg_color="transparent")
+        row.pack(fill="x", padx=16, pady=16)
+        ctk.CTkLabel(row, text="Theme:", font=("Segoe UI", 12),
+                     text_color=PALETTE["text"]).pack(side="left")
+        self.theme_var = ctk.StringVar(value=self.settings.get("theme", "dark"))
+        ctk.CTkOptionMenu(row, values=["dark", "light"], variable=self.theme_var,
+                          fg_color=PALETTE["surface2"],
+                          button_color=PALETTE["accent"],
+                          command=self._on_theme_change).pack(side="right")
+
+        # Confirm Organize
+        self.confirm_var = ctk.BooleanVar(value=self.settings.get("confirm_organize", True))
+        ctk.CTkCheckBox(tab, text="Ask for confirmation before organizing files",
+                        variable=self.confirm_var,
+                        font=("Segoe UI", 12), text_color=PALETTE["text"]).pack(anchor="w", padx=16, pady=10)
+
+        # Include Subfolders
+        self.recursive_var = ctk.BooleanVar(value=self.settings.get("include_subfolders", False))
+        ctk.CTkCheckBox(tab, text="Include subfolders (recursive scan) by default",
+                        variable=self.recursive_var,
+                        font=("Segoe UI", 12), text_color=PALETTE["text"]).pack(anchor="w", padx=16, pady=10)
+
+    def _build_file_org_tab(self) -> None:
+        tab = self.tabview.tab("File Organization")
+
+        # Custom Extensions
+        ctk.CTkLabel(tab, text="Custom Extensions (Add extensions to categories)",
+                     font=("Segoe UI", 13, "bold"), text_color=PALETTE["accent"]).pack(anchor="w", padx=16, pady=(12, 4))
+        
+        add_frame = ctk.CTkFrame(tab, fg_color="transparent")
+        add_frame.pack(fill="x", padx=16, pady=4)
+        
+        all_cats = list(cat_module.DEFAULT_CATEGORIES.keys())
+        self.cat_var = ctk.StringVar(value=all_cats[0])
+        ctk.CTkOptionMenu(add_frame, values=all_cats, variable=self.cat_var,
+                          width=120, fg_color=PALETTE["surface2"]).pack(side="left", padx=(0, 8))
+        
+        self.ext_entry = ctk.CTkEntry(add_frame, placeholder_text=".xyz, .abc", fg_color=PALETTE["surface2"])
+        self.ext_entry.pack(side="left", fill="x", expand=True, padx=(0, 8))
+        
+        ctk.CTkButton(add_frame, text="Add", width=60, fg_color=PALETTE["accent"],
+                      command=self._add_extensions).pack(side="right")
+
+        self.custom_display = ctk.CTkTextbox(tab, height=80, fg_color=PALETTE["surface2"], font=("Consolas", 11))
+        self.custom_display.pack(fill="x", padx=16, pady=(8, 16))
+        self._refresh_custom_display()
+
+        # Rules
+        ctk.CTkLabel(tab, text="Organization Rules",
+                     font=("Segoe UI", 13, "bold"), text_color=PALETTE["accent"]).pack(anchor="w", padx=16, pady=(12, 4))
+        ctk.CTkLabel(tab, text="If extension is AND filename contains → move to Category",
+                     font=("Segoe UI", 11), text_color=PALETTE["text_dim"]).pack(anchor="w", padx=16, pady=2)
+
+        rule_add_frame = ctk.CTkFrame(tab, fg_color="transparent")
+        rule_add_frame.pack(fill="x", padx=16, pady=4)
+
+        self.rule_ext_entry = ctk.CTkEntry(rule_add_frame, placeholder_text="Ext (e.g. .pdf)", width=90)
+        self.rule_ext_entry.pack(side="left", padx=(0, 4))
+
+        self.rule_contains_entry = ctk.CTkEntry(rule_add_frame, placeholder_text="Contains (e.g. college)", width=130)
+        self.rule_contains_entry.pack(side="left", padx=(0, 4))
+
+        self.rule_cat_entry = ctk.CTkEntry(rule_add_frame, placeholder_text="Category Name")
+        self.rule_cat_entry.pack(side="left", fill="x", expand=True, padx=(0, 8))
+
+        ctk.CTkButton(rule_add_frame, text="Add Rule", width=70, fg_color=PALETTE["accent"],
+                      command=self._add_rule).pack(side="right")
+
+        self.rules_display = ctk.CTkTextbox(tab, height=80, fg_color=PALETTE["surface2"], font=("Consolas", 11))
+        self.rules_display.pack(fill="x", padx=16, pady=(8, 8))
+        self._refresh_rules_display()
+
+        ctk.CTkButton(tab, text="Clear Custom Extensions & Rules", fg_color=PALETTE["danger"], hover_color="#c0392b",
+                      command=self._clear_rules_exts).pack(anchor="e", padx=16, pady=4)
+
+    def _build_duplicate_tab(self) -> None:
+        tab = self.tabview.tab("Duplicate Handling")
+        
+        ctk.CTkLabel(tab, text="When a duplicate file is detected:",
+                     font=("Segoe UI", 13, "bold"), text_color=PALETTE["text"]).pack(anchor="w", padx=16, pady=(20, 10))
+        
+        self.dup_var = ctk.StringVar(value=self.settings.get("duplicate_action", "keep_both"))
+        
+        ctk.CTkRadioButton(tab, text="Keep both (auto-rename new file to file_1.ext)",
+                           variable=self.dup_var, value="keep_both",
+                           font=("Segoe UI", 12)).pack(anchor="w", padx=24, pady=8)
+                           
+        ctk.CTkRadioButton(tab, text="Skip the duplicate file",
+                           variable=self.dup_var, value="skip",
+                           font=("Segoe UI", 12)).pack(anchor="w", padx=24, pady=8)
+                           
+        ctk.CTkRadioButton(tab, text="Ask every time",
+                           variable=self.dup_var, value="ask",
+                           font=("Segoe UI", 12)).pack(anchor="w", padx=24, pady=8)
+
+    def _build_watch_tab(self) -> None:
+        tab = self.tabview.tab("Watch Mode")
+        
+        self.watch_auto_var = ctk.BooleanVar(value=self.settings.get("watch_auto_organize", True))
+        ctk.CTkCheckBox(tab, text="Automatically organize new files when Watch Mode is active",
+                        variable=self.watch_auto_var,
+                        font=("Segoe UI", 12)).pack(anchor="w", padx=16, pady=16)
+
+        ctk.CTkLabel(tab, text="Note: Files are organized silently in the background.",
+                     font=("Segoe UI", 11), text_color=PALETTE["text_dim"]).pack(anchor="w", padx=16)
 
     def _on_theme_change(self, value: str) -> None:
         ctk.set_appearance_mode(value)
 
     def _refresh_custom_display(self) -> None:
-        custom = config_manager.get("custom_categories", {})
+        custom = self.settings.get("custom_categories", {})
         self.custom_display.configure(state="normal")
         self.custom_display.delete("1.0", "end")
         if custom:
@@ -233,28 +393,61 @@ class SettingsDialog(ctk.CTkToplevel):
             self.custom_display.insert("end", "No custom extensions added yet.")
         self.custom_display.configure(state="disabled")
 
+    def _refresh_rules_display(self) -> None:
+        rules = self.settings.get("organization_rules", [])
+        self.rules_display.configure(state="normal")
+        self.rules_display.delete("1.0", "end")
+        if rules:
+            for idx, rule in enumerate(rules, 1):
+                self.rules_display.insert("end", f"[{idx}] Ext: {rule.get('extension','*')} | Contains: '{rule.get('contains','')}' → {rule.get('category','')}\n")
+        else:
+            self.rules_display.insert("end", "No rules added yet.")
+        self.rules_display.configure(state="disabled")
+
     def _add_extensions(self) -> None:
         cat = self.cat_var.get()
         raw = self.ext_entry.get().strip()
-        if not raw:
-            return
+        if not raw: return
         exts = [e.strip().lower() for e in raw.split(",") if e.strip()]
         exts = [(e if e.startswith(".") else "." + e) for e in exts]
-
-        custom = config_manager.get("custom_categories", {})
+        custom = self.settings.get("custom_categories", {})
         existing = set(custom.get(cat, []))
         existing.update(exts)
         custom[cat] = sorted(existing)
-        config_manager.set_value("custom_categories", custom)
-
+        self.settings["custom_categories"] = custom
         self.ext_entry.delete(0, "end")
         self._refresh_custom_display()
-        msgbox.showinfo("Extensions Added",
-                        f"Added {', '.join(exts)} to {cat}.", parent=self)
+
+    def _add_rule(self) -> None:
+        ext = self.rule_ext_entry.get().strip()
+        contains = self.rule_contains_entry.get().strip()
+        cat = self.rule_cat_entry.get().strip()
+        if not cat:
+            msgbox.showerror("Error", "Category Name is required.", parent=self)
+            return
+        rules = self.settings.get("organization_rules", [])
+        rules.append({"extension": ext, "contains": contains, "category": cat})
+        self.settings["organization_rules"] = rules
+        self.rule_ext_entry.delete(0, "end")
+        self.rule_contains_entry.delete(0, "end")
+        self.rule_cat_entry.delete(0, "end")
+        self._refresh_rules_display()
+
+    def _clear_rules_exts(self) -> None:
+        if msgbox.askyesno("Clear", "Remove all custom extensions and rules?", parent=self):
+            self.settings["custom_categories"] = {}
+            self.settings["organization_rules"] = []
+            self._refresh_custom_display()
+            self._refresh_rules_display()
 
     def _save_and_close(self) -> None:
-        config_manager.set_value("theme", self.theme_var.get())
-        config_manager.set_value("include_subfolders", self.recursive_var.get())
+        self.settings["theme"] = self.theme_var.get()
+        self.settings["include_subfolders"] = self.recursive_var.get()
+        self.settings["confirm_organize"] = self.confirm_var.get()
+        self.settings["duplicate_action"] = self.dup_var.get()
+        self.settings["watch_auto_organize"] = self.watch_auto_var.get()
+        
+        config_manager.save_settings(self.settings)
         self.parent_app.recursive_var.set(self.recursive_var.get())
         self.destroy()
 
@@ -363,6 +556,11 @@ class BarChart(tk.Canvas):
     def _draw(self) -> None:
         self.delete("all")
         if not self._data:
+            self.create_text(
+                10, 20, anchor="nw",
+                text="Run Analyze or Preview to see data.",
+                fill=PALETTE["text_dim"], font=("Segoe UI", 10)
+            )
             return
 
         w = self.winfo_width() or 300
@@ -373,43 +571,62 @@ class BarChart(tk.Canvas):
         if not cats:
             return
 
-        bar_h = min(22, (h - 24) // max(len(cats), 1))
-        label_w = 80
+        n = len(cats)
+        bar_h = 16
+        label_w = 90
         pad = 12
-        y = pad
+        
+        required_h = n * (bar_h + 8) + pad * 2 + 8
+        if h < required_h:
+            self.configure(height=required_h)
+            h = required_h
+
+        y = pad + 4
+        r = bar_h // 2
 
         for cat in cats:
             val = self._data[cat]
             color = CATEGORY_COLORS.get(cat, PALETTE["text_dim"])
-            bar_max_w = w - label_w - pad * 2 - 36
+            bar_max_w = w - label_w - pad * 2 - 40
             bar_w = int(bar_max_w * val / max_val)
 
             # Label
             self.create_text(
                 pad, y + bar_h // 2,
-                text=f"{CATEGORY_ICONS.get(cat, '•')} {cat}",
+                text=f"{CATEGORY_ICONS.get(cat, chr(8226))} {cat}",
                 anchor="w", fill=PALETTE["text_dim"],
                 font=("Segoe UI", 9),
             )
-            # Bar background
-            self.create_rectangle(
-                label_w, y, label_w + bar_max_w, y + bar_h,
-                fill=PALETTE["border"], outline="",
-            )
-            # Bar fill
-            if bar_w > 0:
-                self.create_rectangle(
-                    label_w, y, label_w + bar_w, y + bar_h,
-                    fill=color, outline="",
-                )
-            # Value text
+            # Bar background (rounded pill)
+            x0, x1 = label_w, label_w + bar_max_w
+            if x1 - x0 > 2 * r:
+                self.create_rectangle(x0 + r, y, x1 - r, y + bar_h,
+                                      fill=PALETTE["border"], outline="")
+                self.create_oval(x0, y, x0 + 2 * r, y + bar_h,
+                                 fill=PALETTE["border"], outline="")
+                self.create_oval(x1 - 2 * r, y, x1, y + bar_h,
+                                 fill=PALETTE["border"], outline="")
+            # Bar fill (rounded pill)
+            if bar_w > 2 * r:
+                fx0, fx1 = label_w, label_w + bar_w
+                self.create_rectangle(fx0 + r, y, fx1 - r, y + bar_h,
+                                      fill=color, outline="")
+                self.create_oval(fx0, y, fx0 + 2 * r, y + bar_h,
+                                 fill=color, outline="")
+                self.create_oval(fx1 - 2 * r, y, fx1, y + bar_h,
+                                 fill=color, outline="")
+            elif bar_w > 0:
+                self.create_oval(label_w, y, label_w + bar_h, y + bar_h,
+                                 fill=color, outline="")
+            # Value label in accent color
             self.create_text(
                 label_w + bar_max_w + 6, y + bar_h // 2,
                 text=str(val), anchor="w",
-                fill=PALETTE["text_dim"],
-                font=("Segoe UI", 9),
+                fill=color,
+                font=("Segoe UI", 9, "bold"),
             )
-            y += bar_h + 4
+            y += bar_h + 8
+
 
 
 # ── Main Application Window ───────────────────────────────────────────────────
@@ -428,6 +645,12 @@ class App:
         self.root.geometry("1100x760")
         self.root.minsize(900, 640)
         self.root.configure(fg_color=PALETTE["bg"])
+
+        self.bg_canvas = tk.Canvas(self.root, bg=PALETTE["bg"], highlightthickness=0)
+        self.bg_canvas.place(x=0, y=0, relwidth=1, relheight=1)
+        self.bg_canvas.create_oval(-200, -200, 700, 700, fill="#12182b", outline="")
+        self.bg_canvas.create_oval(800, 300, 1500, 1000, fill="#161226", outline="")
+        self.bg_canvas.create_oval(100, 500, 700, 1100, fill="#0d1b26", outline="")
 
         self.undo_mgr = undo_module.UndoManager()
         self.monitor: Optional[FolderMonitor] = None
@@ -452,125 +675,153 @@ class App:
         self._build_main_area()
 
     def _build_header(self) -> None:
-        hdr = ctk.CTkFrame(self.root, fg_color=PALETTE["surface"],
-                           corner_radius=0, height=64)
-        hdr.pack(fill="x", side="top")
+        hdr = GlassPanel(self.root, height=72, corner_radius=16)
+        hdr.pack(fill="x", side="top", padx=16, pady=(16, 8))
         hdr.pack_propagate(False)
 
         # Left: logo + title
         left = ctk.CTkFrame(hdr, fg_color="transparent")
-        left.pack(side="left", padx=24, pady=8)
-        ctk.CTkLabel(left, text="📂", font=("Segoe UI", 28)).pack(side="left", padx=(0, 8))
+        left.pack(side="left", padx=24, pady=12)
+        
+        icon_frame = ctk.CTkFrame(left, fg_color="transparent")
+        icon_frame.pack(side="left", padx=(0, 14))
+        # Subtle drop shadow/glow for icon
+        ctk.CTkLabel(icon_frame, text="◈", font=("Segoe UI", 36), text_color="#1a3b7c").place(x=2, y=2)
+        ctk.CTkLabel(icon_frame, text="◈", font=("Segoe UI", 36), text_color=PALETTE["accent"]).pack()
+        
         title_col = ctk.CTkFrame(left, fg_color="transparent")
         title_col.pack(side="left")
         ctk.CTkLabel(title_col, text="Advanced File Organizer",
-                     font=("Segoe UI", 18, "bold"),
-                     text_color=PALETTE["text"]).pack(anchor="w")
-        ctk.CTkLabel(title_col, text="v2.0 — Smart & Safe File Management",
-                     font=("Segoe UI", 11),
+                     font=("Segoe UI", 20, "bold"),
+                     text_color=PALETTE["text"]).pack(anchor="w", pady=(0, 2))
+        ctk.CTkLabel(title_col, text="v2.0  •  Smart & Safe File Management",
+                     font=("Segoe UI", 12),
                      text_color=PALETTE["text_dim"]).pack(anchor="w")
 
-        # Right: watch indicator
-        self.watch_indicator = ctk.CTkLabel(hdr, text="",
+        # Right: watch indicator / app status
+        right_frame = ctk.CTkFrame(hdr, fg_color="transparent")
+        right_frame.pack(side="right", padx=24)
+        
+        self.header_status = ctk.CTkLabel(right_frame, text="● Ready", font=("Segoe UI", 12), text_color=PALETTE["text_dim"])
+        self.header_status.pack(side="right", padx=(16, 0))
+        
+        self.watch_indicator = ctk.CTkLabel(right_frame, text="",
                                             font=("Segoe UI", 12),
                                             text_color=PALETTE["success"])
-        self.watch_indicator.pack(side="right", padx=24)
+        self.watch_indicator.pack(side="right")
 
     def _build_folder_row(self) -> None:
-        row = ctk.CTkFrame(self.root, fg_color=PALETTE["surface"],
-                           corner_radius=12)
-        row.pack(fill="x", padx=16, pady=(12, 4))
+        row = GlassPanel(self.root)
+        row.pack(fill="x", padx=16, pady=4)
+        row.columnconfigure(1, weight=1)
 
         ctk.CTkLabel(row, text="📁  Folder to Organize:",
                      font=("Segoe UI", 13),
-                     text_color=PALETTE["text"]).pack(side="left", padx=(16, 8), pady=12)
+                     text_color=PALETTE["text"]).grid(row=0, column=0, padx=(16, 8), pady=(16, 4), sticky="w")
 
-        self.folder_entry = ctk.CTkEntry(
+        self.folder_entry = GlassEntry(
             row,
             placeholder_text="Select or type a folder path…",
-            fg_color=PALETTE["surface2"],
-            border_color=PALETTE["border"],
-            text_color=PALETTE["text"],
-            font=("Segoe UI", 12),
             height=38,
         )
-        self.folder_entry.pack(side="left", fill="x", expand=True, padx=(0, 8), pady=10)
+        self.folder_entry.grid(row=0, column=1, padx=(0, 8), pady=(16, 4), sticky="ew")
 
         ctk.CTkButton(
             row, text="Browse",
-            fg_color=PALETTE["accent"],
-            hover_color=PALETTE["accent_hover"],
-            font=("Segoe UI", 12),
+            fg_color=PALETTE["surface2"],
+            hover_color=PALETTE["border_light"],
+            border_color=PALETTE["border"],
+            border_width=1,
+            text_color=PALETTE["text"],
+            font=("Segoe UI", 12, "bold"),
             width=90, height=38,
             command=self._browse,
-        ).pack(side="right", padx=(0, 16), pady=10)
-
-    def _build_options_row(self) -> None:
-        row = ctk.CTkFrame(self.root, fg_color="transparent")
-        row.pack(fill="x", padx=16, pady=(0, 4))
-
+        ).grid(row=0, column=2, padx=(0, 16), pady=(16, 4))
+        
         ctk.CTkCheckBox(
             row,
             text="Include Subfolders (recursive)",
             variable=self.recursive_var,
-            font=("Segoe UI", 12),
+            font=("Segoe UI", 11),
             text_color=PALETTE["text_dim"],
             fg_color=PALETTE["accent"],
             hover_color=PALETTE["accent_hover"],
-        ).pack(side="left", padx=4)
+            border_width=1,
+            border_color=PALETTE["border"],
+            corner_radius=4,
+            checkbox_width=20, checkbox_height=20
+        ).grid(row=1, column=1, padx=(0, 8), pady=(4, 16), sticky="w")
+
+    def _build_options_row(self) -> None:
+        pass
 
     def _build_action_bar(self) -> None:
-        bar = ctk.CTkFrame(self.root, fg_color=PALETTE["surface"],
-                           corner_radius=12)
+        bar = GlassPanel(self.root)
         bar.pack(fill="x", padx=16, pady=4)
 
+        # Center the buttons
+        btn_container = ctk.CTkFrame(bar, fg_color="transparent")
+        btn_container.pack(expand=True, padx=4, pady=8)
+
         btn_config = [
-            ("🔍  Analyze",   PALETTE["surface2"],  PALETTE["border"],     self._run_analyze),
-            ("👁  Preview",   PALETTE["accent"],     PALETTE["accent_hover"], self._run_preview),
-            ("⚡  Organize",  PALETTE["success"],    "#1ea855",             self._run_organize),
-            ("↩  Undo",       PALETTE["warning"],    "#d4911d",             self._run_undo),
-            ("👁‍🗨  Watch",    PALETTE["surface2"],  PALETTE["border"],     self._toggle_watch),
-            ("⚙  Settings",  PALETTE["surface2"],  PALETTE["border"],     self._open_settings),
+            ("🔍  Analyze",   PALETTE["surface2"],  PALETTE["border_light"],     self._run_analyze, "Preview files without moving them"),
+            ("👁  Preview",   PALETTE["surface2"],  PALETTE["border_light"], self._run_preview, "Detailed file preview before organizing"),
+            ("⚡  Organize",  PALETTE["accent"],    PALETTE["accent_hover"],             self._run_organize, "Move files into category folders"),
+            ("↩  Undo",       PALETTE["surface2"],  "#382d23",             self._run_undo, "Restore files from the last session"),
+            ("◉  Watch",    PALETTE["surface2"],  PALETTE["border_light"],     self._toggle_watch, "Monitor folder for new files"),
+            ("🕰  Activity",   PALETTE["surface2"],  PALETTE["border_light"],     self._open_activity, "View recent organization activity"),
+            ("⚙  Settings",  PALETTE["surface2"],  PALETTE["border_light"],     self._open_settings, "Configure application behavior"),
         ]
 
-        for text, fg, hover, cmd in btn_config:
+        for text, fg, hover, cmd, tooltip_text in btn_config:
             is_watch = "Watch" in text
-            btn = ctk.CTkButton(
-                bar,
+            is_organize = "Organize" in text
+            is_undo = "Undo" in text
+            
+            border_col = PALETTE["accent"] if is_organize else (PALETTE["warning"] if is_undo else PALETTE["border"])
+            if is_undo: border_col = "#4a3c26"
+            
+            btn = GlassButton(
+                btn_container,
                 text=text,
                 fg_color=fg,
                 hover_color=hover,
-                text_color=PALETTE["text"],
-                font=("Segoe UI", 12, "bold"),
-                height=40,
-                corner_radius=8,
+                text_color=PALETTE["text"] if not is_organize else "#ffffff",
+                border_color=border_col,
+                height=36,
                 command=cmd,
             )
-            btn.pack(side="left", padx=6, pady=10)
+            btn.pack(side="left", padx=6, pady=2)
             if is_watch:
                 self.watch_btn = btn
+            ToolTip(btn, tooltip_text)
 
     def _build_progress_row(self) -> None:
-        row = ctk.CTkFrame(self.root, fg_color="transparent")
-        row.pack(fill="x", padx=16, pady=(4, 0))
+        row = GlassPanel(self.root, corner_radius=10)
+        row.pack(fill="x", padx=16, pady=4)
 
-        self.progress_bar = ctk.CTkProgressBar(
-            row,
-            fg_color=PALETTE["surface2"],
-            progress_color=PALETTE["accent"],
-            height=8,
-        )
-        self.progress_bar.set(0)
-        self.progress_bar.pack(fill="x", side="left", expand=True, padx=(0, 12))
+        inner = ctk.CTkFrame(row, fg_color="transparent")
+        inner.pack(fill="x", padx=16, pady=(10, 4))
 
         self.status_label = ctk.CTkLabel(
-            row, text="Ready",
+            inner, text="● Ready",
             font=("Segoe UI", 12),
             text_color=PALETTE["text_dim"],
-            width=260,
-            anchor="e",
+            anchor="w",
         )
-        self.status_label.pack(side="right")
+        self.status_label.pack(side="left")
+
+        self.progress_pct = ctk.CTkLabel(
+            inner, text="0%",
+            font=("Segoe UI", 11, "bold"),
+            text_color=PALETTE["text_dim"],
+            anchor="e"
+        )
+        self.progress_pct.pack(side="right")
+
+        self.progress_bar = GlassProgressBar(row, height=4, corner_radius=2)
+        self.progress_bar.set(0)
+        self.progress_bar.pack(fill="x", padx=16, pady=(0, 12))
 
     def _build_main_area(self) -> None:
         """Two-column layout: preview panel (left) + stats dashboard (right)."""
@@ -584,8 +835,7 @@ class App:
         self._build_stats_panel(main)
 
     def _build_preview_panel(self, parent) -> None:
-        frame = ctk.CTkFrame(parent, fg_color=PALETTE["surface"],
-                             corner_radius=12)
+        frame = GlassPanel(parent)
         frame.grid(row=0, column=0, sticky="nsew", padx=(0, 8))
 
         # Header row
@@ -599,11 +849,29 @@ class App:
                                                  text_color=PALETTE["text_dim"])
         self.preview_count_label.pack(side="right")
 
+        # Search / Filter row
+        sf_row = ctk.CTkFrame(frame, fg_color="transparent")
+        sf_row.pack(fill="x", padx=12, pady=(4, 0))
+
+        self.search_var = ctk.StringVar()
+        self.search_entry = GlassEntry(sf_row, placeholder_text="Search files...",
+                                         textvariable=self.search_var,
+                                         height=30)
+        self.search_entry.pack(side="left", fill="x", expand=True, padx=(0, 8))
+        self.search_var.trace_add("write", lambda *args: self._filter_preview())
+
+        self.filter_var = ctk.StringVar(value="All")
+        cats_with_all = ["All"] + list(cat_module.DEFAULT_CATEGORIES.keys()) + ["Others", "Duplicates", "Errors"]
+        self.filter_menu = ctk.CTkOptionMenu(sf_row, values=cats_with_all, variable=self.filter_var,
+                                             fg_color=PALETTE["surface2"], button_color=PALETTE["border"],
+                                             command=lambda _: self._filter_preview(), width=130)
+        self.filter_menu.pack(side="right")
+
         # Column headers
         col_hdr = ctk.CTkFrame(frame, fg_color=PALETTE["surface2"],
                                corner_radius=6)
         col_hdr.pack(fill="x", padx=12, pady=(8, 0))
-        for text, w in [("File Name", 220), ("→", 20), ("Category", 100), ("Status", 120)]:
+        for text, w in [("File Name", 190), ("Size", 60), ("→", 20), ("Category", 100), ("Status", 110)]:
             ctk.CTkLabel(col_hdr, text=text, width=w,
                          font=("Segoe UI", 11, "bold"),
                          text_color=PALETTE["text_dim"],
@@ -612,14 +880,13 @@ class App:
         # Scrollable file list
         self.preview_scroll = ctk.CTkScrollableFrame(
             frame,
-            fg_color=PALETTE["surface"],
+            fg_color="transparent",
             scrollbar_button_color=PALETTE["border"],
         )
         self.preview_scroll.pack(fill="both", expand=True, padx=12, pady=(4, 12))
 
     def _build_stats_panel(self, parent) -> None:
-        frame = ctk.CTkFrame(parent, fg_color=PALETTE["surface"],
-                             corner_radius=12)
+        frame = GlassPanel(parent)
         frame.grid(row=0, column=1, sticky="nsew", padx=(8, 0))
 
         ctk.CTkLabel(frame, text="📊  Statistics",
@@ -644,19 +911,21 @@ class App:
         self.card_errors.grid(row=1, column=1, padx=4, pady=4, sticky="ew")
 
         self.card_others = _make_stat_card(cards_frame, "Others", "0", PALETTE["card_others"])
-        self.card_others.grid(row=2, column=0, columnspan=2, padx=4, pady=4, sticky="ew")
+        self.card_others.grid(row=2, column=0, padx=4, pady=4, sticky="ew")
+
+        self.card_size = _make_stat_card(cards_frame, "Total Size", "0 B", PALETTE["text_dim"])
+        self.card_size.grid(row=2, column=1, padx=4, pady=4, sticky="ew")
 
         # ── Bar chart ─────────────────────────────────────────────────────
         ctk.CTkLabel(frame, text="Category Breakdown",
                      font=("Segoe UI", 12, "bold"),
                      text_color=PALETTE["text_dim"]).pack(anchor="w", padx=16, pady=(4, 2))
 
-        chart_frame = ctk.CTkFrame(frame, fg_color=PALETTE["surface2"],
-                                   corner_radius=8)
+        chart_frame = ctk.CTkScrollableFrame(frame, fg_color="transparent", scrollbar_button_color=PALETTE["border"])
         chart_frame.pack(fill="both", expand=True, padx=12, pady=(0, 12))
 
-        self.bar_chart = BarChart(chart_frame, bg=PALETTE["surface2"])
-        self.bar_chart.pack(fill="both", expand=True, padx=8, pady=8)
+        self.bar_chart = BarChart(chart_frame, bg=PALETTE["surface"])
+        self.bar_chart.pack(fill="both", expand=True, padx=2, pady=2)
         self.bar_chart.bind("<Configure>", lambda e: self.bar_chart._draw())
 
     # ── Internal state helpers ────────────────────────────────────────────────
@@ -676,12 +945,32 @@ class App:
 
     def _set_status(self, msg: str, color: str = "") -> None:
         color = color or PALETTE["text_dim"]
-        self.status_label.configure(text=msg, text_color=color)
+        # Prefix a dot indicator based on nature of message
+        if msg.startswith(("✔", "Done", "✓")):
+            display = f"✓  {msg.lstrip('✔✓').strip()}"
+            header_display = "● Done"
+            header_color = PALETTE["success"]
+        elif "error" in msg.lower() or "❌" in msg:
+            display = f"●  {msg}"
+            header_display = "● Error"
+            header_color = PALETTE["danger"]
+        elif "Analyzing" in msg or "Building" in msg or "Organizing" in msg or "Undoing" in msg or "Monitoring" in msg:
+            display = f"●  {msg}"
+            header_display = "● Working"
+            header_color = PALETTE["accent"]
+        else:
+            display = msg
+            header_display = "● Ready"
+            header_color = PALETTE["text_dim"]
+
+        self.status_label.configure(text=display, text_color=color)
+        self.header_status.configure(text=header_display, text_color=header_color)
         self.root.update_idletasks()
 
     def _set_progress(self, value: float) -> None:
         """value: 0.0 – 1.0"""
         self.progress_bar.set(value)
+        self.progress_pct.configure(text=f"{int(value * 100)}%")
         self.root.update_idletasks()
 
     def _restore_last_folder(self) -> None:
@@ -694,28 +983,54 @@ class App:
             widget.destroy()
         self.preview_count_label.configure(text="")
 
-    def _update_stat_cards(self, total=0, moved=0, dups=0, errors=0, others=0) -> None:
+    def _update_stat_cards(self, total=0, moved=0, dups=0, errors=0, others=0, total_size=0) -> None:
         self.card_total._val_label.configure(text=str(total))
         self.card_moved._val_label.configure(text=str(moved))
         self.card_dups._val_label.configure(text=str(dups))
         self.card_errors._val_label.configure(text=str(errors))
         self.card_others._val_label.configure(text=str(others))
+        self.card_size._val_label.configure(text=format_size(total_size))
 
     # ── Preview list rendering ────────────────────────────────────────────────
 
-    def _render_preview(self, preview: org_module.PreviewResult) -> None:
+    def _filter_preview(self) -> None:
+        if self._current_preview:
+            self._render_preview(self._current_preview)
+
+    def _render_preview(self, preview: org_module.PreviewResult, empty_message: str = "") -> None:
         self._clear_preview()
 
+        search_text = self.search_var.get().lower()
+        filter_cat = self.filter_var.get()
+
+        visible_count = 0
+
         for fp in preview.file_previews:
+            if search_text and search_text not in fp.filename.lower():
+                continue
+            if filter_cat != "All":
+                if filter_cat == "Duplicates" and not (fp.is_name_conflict or fp.is_content_duplicate):
+                    continue
+                elif filter_cat == "Errors":
+                    pass # Not tracked here, let's keep it simple
+                elif filter_cat not in ["Duplicates", "Errors"] and fp.destination_category != filter_cat:
+                    continue
+            
+            visible_count += 1
+            row_color = PALETTE["surface2"] if visible_count % 2 == 0 else PALETTE["surface"]
             row = ctk.CTkFrame(self.preview_scroll,
-                               fg_color=PALETTE["surface2"],
-                               corner_radius=6)
-            row.pack(fill="x", pady=2)
+                               fg_color=row_color, corner_radius=5)
+            row.pack(fill="x", pady=1)
 
             # File name
-            ctk.CTkLabel(row, text=fp.filename, width=220,
+            ctk.CTkLabel(row, text=fp.filename, width=190,
                          anchor="w", font=("Segoe UI", 11),
                          text_color=PALETTE["text"]).pack(side="left", padx=(8, 4), pady=5)
+
+            # Size
+            ctk.CTkLabel(row, text=format_size(fp.file_size), width=60,
+                         anchor="e", font=("Segoe UI", 11),
+                         text_color=PALETTE["text_dim"]).pack(side="left", padx=4)
 
             # Arrow
             ctk.CTkLabel(row, text="→", width=20,
@@ -726,7 +1041,7 @@ class App:
             cat_color = CATEGORY_COLORS.get(fp.destination_category, PALETTE["text_dim"])
             cat_lbl = ctk.CTkLabel(row,
                                    text=f"{CATEGORY_ICONS.get(fp.destination_category, '•')} {fp.destination_category}",
-                                   width=110,
+                                   width=100,
                                    anchor="w",
                                    font=("Segoe UI", 11, "bold"),
                                    text_color=cat_color)
@@ -740,13 +1055,20 @@ class App:
             else:
                 chip_text, chip_color = "✔ Ready", PALETTE["success"]
 
-            ctk.CTkLabel(row, text=chip_text, width=120,
+            ctk.CTkLabel(row, text=chip_text, width=110,
                          anchor="w",
                          font=("Segoe UI", 11),
                          text_color=chip_color).pack(side="left", padx=4)
 
-        count = len(preview.file_previews)
-        self.preview_count_label.configure(text=f"{count} file{'s' if count != 1 else ''}")
+        if visible_count == 0:
+            msg = empty_message or "No files found in this folder."
+            lbl = ctk.CTkLabel(self.preview_scroll, text=msg,
+                               font=("Segoe UI", 13, "italic"),
+                               text_color=PALETTE["text_dim"])
+            lbl.pack(pady=40)
+            self.preview_count_label.configure(text="")
+        else:
+            self.preview_count_label.configure(text=f"{visible_count} file{'s' if visible_count != 1 else ''} shown")
 
     # ── Actions ───────────────────────────────────────────────────────────────
 
@@ -781,6 +1103,7 @@ class App:
             dups=result.name_conflicts + result.content_duplicates,
             errors=0,
             others=result.going_to_others,
+            total_size=result.total_size,
         )
         self.bar_chart.update_data(result.category_counts)
         self._set_status(
@@ -813,6 +1136,7 @@ class App:
             dups=result.name_conflicts + result.content_duplicates,
             errors=0,
             others=result.going_to_others,
+            total_size=result.total_size,
         )
         self.bar_chart.update_data(result.category_counts)
         self._set_status(
@@ -901,12 +1225,17 @@ class App:
             dups=0,
             errors=result.errors,
             others=result.category_stats.get("Others", 0),
+            total_size=result.total_size,
         )
         self.bar_chart.update_data(result.category_stats)
 
         # Refresh preview
         preview = org_module.scan_folder(folder, self.recursive_var.get())
-        self._render_preview(preview)
+        if result.moved > 0:
+            msg = f"✓ Organized {result.moved} file(s). Select another folder to continue."
+        else:
+            msg = "No files to display."
+        self._render_preview(preview, empty_message=msg)
 
         if result.errors:
             self._set_status(
@@ -987,8 +1316,9 @@ class App:
         if self.monitor and self.monitor.is_running:
             self.monitor.stop()
             self.monitor = None
-            self.watch_btn.configure(text="👁‍🗨  Watch",
-                                     fg_color=PALETTE["surface2"])
+            self.watch_btn.configure(text="◉  Watch",
+                                     fg_color=PALETTE["surface2"],
+                                     border_color=PALETTE["border"])
             self.watch_indicator.configure(text="")
             self._set_status("⏹  Folder monitoring stopped.", PALETTE["text_dim"])
             return
@@ -1005,10 +1335,15 @@ class App:
         self.monitor = FolderMonitor(folder, _on_organized)
         self.monitor.start()
 
-        self.watch_btn.configure(text="⏹  Stop Watch",
-                                 fg_color=PALETTE["danger"])
-        self.watch_indicator.configure(text="● Watching")
+        self.watch_btn.configure(text="●  Watching",
+                                 fg_color=PALETTE["success"],
+                                 border_color=PALETTE["success"],
+                                 hover_color="#1ea855")
+        self.watch_indicator.configure(text="● Watching", text_color=PALETTE["success"])
         self._set_status(f"👁  Monitoring: {folder}", PALETTE["success"])
+
+    def _open_activity(self) -> None:
+        ActivityDialog(self)
 
     def _open_settings(self) -> None:
         SettingsDialog(self)
@@ -1026,3 +1361,49 @@ class App:
 
     def run(self) -> None:
         self.root.mainloop()
+
+# ── Activity Dialog ───────────────────────────────────────────────────────────
+
+class ActivityDialog(ctk.CTkToplevel):
+    """Shows history of organized files."""
+    def __init__(self, parent: App) -> None:
+        super().__init__(parent.root)
+        self.title("Recent Activity")
+        self.geometry("600x500")
+        self.resizable(False, False)
+        self.configure(fg_color=PALETTE["bg"])
+        self.grab_set()
+
+        ctk.CTkLabel(self, text="🕰  Recent Organization Activity",
+                     font=("Segoe UI", 18, "bold"), text_color=PALETTE["text"]).pack(pady=(20, 10))
+
+        scroll = ctk.CTkScrollableFrame(self, fg_color=PALETTE["surface"], corner_radius=10)
+        scroll.pack(fill="both", expand=True, padx=20, pady=(0, 20))
+
+        summaries = parent.undo_mgr.get_all_sessions_summary()
+        if not summaries:
+            ctk.CTkLabel(scroll, text="No activity recorded.", text_color=PALETTE["text_dim"]).pack(pady=20)
+            return
+
+        for s in reversed(summaries):
+            card = ctk.CTkFrame(scroll, fg_color=PALETTE["surface2"], corner_radius=8)
+            card.pack(fill="x", pady=6, padx=4)
+            
+            top_row = ctk.CTkFrame(card, fg_color="transparent")
+            top_row.pack(fill="x", padx=10, pady=(10, 2))
+            
+            ctk.CTkLabel(top_row, text=s["timestamp"], font=("Segoe UI", 11, "bold"), text_color=PALETTE["text"]).pack(side="left")
+            ctk.CTkLabel(top_row, text=f"ID: {s['session_id'][:8]}", font=("Segoe UI", 10), text_color=PALETTE["text_dim"]).pack(side="right")
+            
+            mid_row = ctk.CTkFrame(card, fg_color="transparent")
+            mid_row.pack(fill="x", padx=10, pady=2)
+            ctk.CTkLabel(mid_row, text=f"Folder: {s['folder']}", font=("Segoe UI", 11), text_color=PALETTE["text"]).pack(side="left")
+            
+            bot_row = ctk.CTkFrame(card, fg_color="transparent")
+            bot_row.pack(fill="x", padx=10, pady=(2, 10))
+            
+            ctk.CTkLabel(bot_row, text=f"Moved: {s['file_count']}", font=("Segoe UI", 11), text_color=PALETTE["success"]).pack(side="left", padx=(0, 10))
+            if s.get("errors", 0):
+                ctk.CTkLabel(bot_row, text=f"Errors: {s['errors']}", font=("Segoe UI", 11), text_color=PALETTE["danger"]).pack(side="left", padx=(0, 10))
+            if s.get("skipped", 0):
+                ctk.CTkLabel(bot_row, text=f"Skipped: {s['skipped']}", font=("Segoe UI", 11), text_color=PALETTE["warning"]).pack(side="left")

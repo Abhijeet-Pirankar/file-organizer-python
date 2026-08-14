@@ -85,6 +85,51 @@ def get_category_for_extension(ext: str,
     return "Others"
 
 
+def evaluate_rules(filename: str, ext: str) -> str | None:
+    """
+    Check if the file matches any custom rules.
+    Rules format: {"extension": ".pdf", "contains": "college", "category": "College Documents"}
+    """
+    rules = config_manager.get("organization_rules", [])
+    if not rules:
+        return None
+
+    fname_lower = filename.lower()
+    ext_lower = ext.lower()
+
+    for rule in rules:
+        rule_ext = rule.get("extension", "").strip().lower()
+        if rule_ext and not rule_ext.startswith("."):
+            rule_ext = "." + rule_ext
+        
+        rule_contains = rule.get("contains", "").strip().lower()
+        
+        # Match logic
+        ext_matches = (not rule_ext) or (rule_ext == ext_lower)
+        contains_matches = (not rule_contains) or (rule_contains in fname_lower)
+        
+        if ext_matches and contains_matches:
+            # If a rule has at least one condition and both passed
+            if rule_ext or rule_contains:
+                cat = rule.get("category", "").strip()
+                if cat:
+                    return cat
+
+    return None
+
+
+def get_category_for_file(filename: str, ext: str,
+                           categories_map: Dict[str, List[str]] | None = None) -> str:
+    """
+    Evaluates rules first, then falls back to default extension mapping.
+    """
+    rule_category = evaluate_rules(filename, ext)
+    if rule_category:
+        return rule_category
+
+    return get_category_for_extension(ext, categories_map)
+
+
 def save_custom_categories(custom: Dict[str, List[str]]) -> None:
     """Persist a user-edited custom_categories dict to settings."""
     config_manager.set_value("custom_categories", custom)

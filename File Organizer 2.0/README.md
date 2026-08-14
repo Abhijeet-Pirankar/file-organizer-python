@@ -1,4 +1,4 @@
-# 📂 Advanced File Organizer v2.0
+# 📂 Advanced File Organizer v2.1
 
 > **A professional, modern desktop application for smart and safe file organization — built with Python.**
 
@@ -21,14 +21,15 @@
 |---|---|
 | 🖥 **Modern GUI** | Clean dark-themed desktop app built with CustomTkinter |
 | 🔍 **Analyze Mode** | Scan a folder and see stats without moving anything |
-| 👁 **Preview Mode** | See exactly which file goes where before committing |
+| 👁 **Preview Mode** | See exactly which file goes where before committing. Includes Search & Filters |
 | ⚡ **Smart Organize** | Move files to category folders with one click |
 | ↩ **Undo** | Restore all files to their original locations after organizing |
+| 🕰 **Recent Activity** | View the history of your organized files across multiple sessions |
 | 🔁 **Duplicate Detection** | Detects both filename conflicts AND identical file content (SHA-256) |
 | 📂 **Recursive Scanning** | Optionally include subfolders |
-| ⚙ **Custom Categories** | Add your own extensions via the Settings panel |
+| ⚙ **Custom Categories & Rules** | Add custom extensions and rule-based keyword routing |
 | 👁‍🗨 **Watch Folder** | Auto-organize newly added files in real time |
-| 📊 **Statistics Dashboard** | Stat cards + bar chart breakdown by category |
+| 📊 **Statistics Dashboard** | Stat cards + bar chart breakdown by category + Size statistics |
 | 📝 **Structured Logging** | Human-readable `log.txt` + machine-readable `organizer_log.jsonl` |
 | 📄 **Report** | Auto-generated `report.txt` after each organize run |
 
@@ -87,8 +88,9 @@ The GUI will open automatically.
 3. **Preview** — Click Preview to see a file-by-file list of what will happen.
 4. **Organize** — Click Organize, confirm the prompt, and let it run.
 5. **Undo** — Click Undo to restore all files to their original locations.
-6. **Watch** — Click Watch to auto-organize files as they are added to the folder.
-7. **Settings** — Customize theme, recursive scan, and add custom extensions.
+6. **Activity** — View a log of your recent organization sessions.
+7. **Watch** — Click Watch to auto-organize files as they are added to the folder.
+8. **Settings** — Customize theme, rules, watch mode behavior, duplicate handling, and add custom extensions.
 
 > ⚠ Files are **never deleted automatically**. Every move can be undone.
 
@@ -163,7 +165,6 @@ pyinstaller --onefile --windowed --name="FileOrganizer" main.py
 - [ ] Drag-and-drop folder selection
 - [ ] Cloud sync integration (Google Drive / OneDrive)
 - [ ] Scheduled auto-organization
-- [ ] Dark/light theme toggle in the header
 - [ ] Multi-folder organization in one run
 - [ ] Export statistics as CSV
 
@@ -171,7 +172,7 @@ pyinstaller --onefile --windowed --name="FileOrganizer" main.py
 
 ## 👨‍💻 Author
 
-**Abhijeet Sanjay Pirankar**
+**Abhijeet Pirankar**
 
 ---
 
