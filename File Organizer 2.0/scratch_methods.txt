@@ -1,0 +1,195 @@
+def _get_folder(self) -> Optional[Path]:
+    raw = self.folder_entry.get().strip()
+    if not raw:
+        self._set_status('⚠  Please select a folder first.', PALETTE['warning'])
+        return None
+    p = Path(raw)
+    if not p.is_dir():
+        self._set_status('❌  Invalid folder path.', PALETTE['danger'])
+        msgbox.showerror('Invalid Path', f'The folder does not exist:\n{raw}')
+        return None
+    return p
+
+def _browse(self) -> None:
+    folder = filedialog.askdirectory(title='Select Folder to Organize')
+    if folder:
+        self.folder_entry.delete(0, 'end')
+        self.folder_entry.insert(0, folder)
+        config_manager.set_value('last_folder', folder)
+        self._set_status(f'📁  Selected: {folder}', PALETTE['text_dim'])
+
+def _run_analyze(self) -> None:
+    """Quick stats scan — no file list in preview panel."""
+    folder = self._get_folder()
+    if folder is None:
+        return
+    self._set_status('🔍  Analyzing folder…', PALETTE['accent'])
+    self._set_progress(0.3)
+
+    def _worker():
+        result = org_module.scan_folder(folder, self.recursive_var.get())
+        self.root.after(0, lambda: self._on_analyze_done(result))
+    threading.Thread(target=_worker, daemon=True).start()
+
+def _on_analyze_done(self, result: org_module.PreviewResult) -> None:
+    self._current_preview = result
+    self._set_progress(1.0)
+    self._update_stat_cards(total=result.total_files, moved=result.organizable, dups=result.name_conflicts + result.content_duplicates, errors=0, others=result.going_to_others, total_size=result.total_size)
+    self.bar_chart.update_data(result.category_counts)
+    self._set_status(f'✔  Analysis done — {result.total_files} files found.', PALETTE['success'])
+
+def _run_preview(self) -> None:
+    """Full scan with file-by-file preview list."""
+    folder = self._get_folder()
+    if folder is None:
+        return
+    self._clear_preview()
+    self._set_status('👁  Building preview…', PALETTE['accent'])
+    self._set_progress(0.0)
+
+    def _worker():
+        result = org_module.scan_folder(folder, self.recursive_var.get())
+        self.root.after(0, lambda: self._on_preview_done(result))
+    threading.Thread(target=_worker, daemon=True).start()
+
+def _on_preview_done(self, result: org_module.PreviewResult) -> None:
+    self._current_preview = result
+    self._render_preview(result)
+    self._set_progress(1.0)
+    self._update_stat_cards(total=result.total_files, moved=result.organizable, dups=result.name_conflicts + result.content_duplicates, errors=0, others=result.going_to_others, total_size=result.total_size)
+    self.bar_chart.update_data(result.category_counts)
+    self._set_status(f'👁  Preview ready — {result.total_files} files.', PALETTE['accent'])
+
+def _run_organize(self) -> None:
+    """Ask for confirmation, then organize in a background thread."""
+    folder = self._get_folder()
+    if folder is None:
+        return
+    if self._current_preview is None:
+        result = org_module.scan_folder(folder, self.recursive_var.get())
+        self._current_preview = result
+    total = self._current_preview.total_files
+    confirmed = msgbox.askyesno('Confirm Organization', f'Ready to organize {total} file(s) in:\n\n{folder}\n\n• Files will be moved into category subfolders.\n• This action can be undone.\n\nProceed?', icon='question')
+    if not confirmed:
+        self._set_status('Cancelled.', PALETTE['text_dim'])
+        return
+    self._set_status('⚡  Organizing…', PALETTE['accent'])
+    self._set_progress(0.0)
+    self._clear_preview()
+
+    def _on_progress(filename: str, cat: str, idx: int, total_f: int) -> None:
+        pct = idx / max(total_f, 1)
+        self.root.after(0, lambda: self._set_progress(pct))
+        self.root.after(0, lambda: self._set_status(f'⚡  {idx}/{total_f}  {filename} → {cat}', PALETTE['accent']))
+
+    def _on_duplicate(fp: FilePreview, dup: DuplicateInfo) -> str:
+        result_holder = [DuplicateAction.KEEP_BOTH]
+
+        def _show_dialog():
+            dlg = DuplicateDialog(self.root, fp, dup)
+            self.root.wait_window(dlg)
+            result_holder[0] = dlg.result
+        self.root.after(0, _show_dialog)
+        import time
+        time.sleep(0.1)
+        while self.root.winfo_exists():
+            try:
+                if not any((isinstance(w, DuplicateDialog) for w in self.root.winfo_children())):
+                    break
+            except Exception:
+                break
+            time.sleep(0.05)
+        return result_holder[0]
+
+    def _worker():
+        org_result = org_module.organize_folder(folder_path=folder, recursive=self.recursive_var.get(), on_progress=_on_progress, on_duplicate=_on_duplicate, undo_mgr=self.undo_mgr)
+        self.root.after(0, lambda: self._on_organize_done(org_result, folder))
+    self._organize_thread = threading.Thread(target=_worker, daemon=True)
+    self._organize_thread.start()
+
+def _on_organize_done(self, result: org_module.OrganizeResult, folder: Path) -> None:
+    self._set_progress(1.0)
+    self._update_stat_cards(total=result.total_files, moved=result.moved, dups=0, errors=result.errors, others=result.category_stats.get('Others', 0), total_size=result.total_size)
+    self.bar_chart.update_data(result.category_stats)
+    preview = org_module.scan_folder(folder, self.recursive_var.get())
+    if result.moved > 0:
+        msg = f'✓ Organized {result.moved} file(s). Select another folder to continue.'
+    else:
+        msg = 'No files to display.'
+    self._render_preview(preview, empty_message=msg)
+    if result.errors:
+        self._set_status(f'⚠  Done: {result.moved} moved, {result.errors} error(s).', PALETTE['warning'])
+        err_text = '\n'.join(result.error_messages[:10])
+        msgbox.showwarning('Completed with Errors', f'Organized {result.moved} file(s). {result.errors} error(s):\n\n{err_text}')
+    else:
+        self._set_status(f'✔  Done! {result.moved} file(s) organized.', PALETTE['success'])
+        msgbox.showinfo('Organization Complete', f'✔  {result.moved} file(s) organized successfully!\n\n• log.txt and report.txt saved in:\n  {folder}\n\n• Use Undo to reverse this operation.')
+
+def _run_undo(self) -> None:
+    if not self.undo_mgr.can_undo():
+        self._set_status('↩  Nothing to undo.', PALETTE['text_dim'])
+        msgbox.showinfo('Undo', 'There is no previous operation to undo.')
+        return
+    summary = self.undo_mgr.get_last_session_summary()
+    confirmed = msgbox.askyesno('Undo Last Organization', f"Restore {summary['file_count']} file(s) to their original locations?\n\nFolder: {summary['folder']}\nSession: {summary['session_id']}\n\nFiles will be moved back. This cannot be re-undone.", icon='warning')
+    if not confirmed:
+        return
+    self._set_status('↩  Undoing…', PALETTE['warning'])
+    self._set_progress(0.3)
+
+    def _worker():
+        undo_result = self.undo_mgr.undo_last()
+        self.root.after(0, lambda: self._on_undo_done(undo_result))
+    threading.Thread(target=_worker, daemon=True).start()
+
+def _on_undo_done(self, result: dict) -> None:
+    self._set_progress(1.0)
+    restored = result['restored']
+    errors = result['errors']
+    skipped = result.get('skipped', 0)
+    if errors or skipped:
+        self._set_status(f'↩  Restored {restored}, {len(errors)} error(s).', PALETTE['warning'])
+        err_text = '\n'.join(errors[:8])
+        msgbox.showwarning('Undo Complete', f'Restored {restored} file(s).\n\nIssues:\n{err_text}')
+    else:
+        self._set_status(f'↩  Restored {restored} file(s).', PALETTE['success'])
+        msgbox.showinfo('Undo Complete', f'✔  {restored} file(s) restored to their original locations.')
+
+def _toggle_watch(self) -> None:
+    if not WATCHDOG_AVAILABLE:
+        msgbox.showerror('Watchdog Not Installed', 'Install watchdog to use folder monitoring:\n\npip install watchdog')
+        return
+    if self.monitor and self.monitor.is_running:
+        self.monitor.stop()
+        self.monitor = None
+        self.watch_btn.configure(text='◉  Watch', fg_color=PALETTE['surface2'], border_color=PALETTE['border'])
+        self.watch_indicator.configure(text='')
+        self._set_status('⏹  Folder monitoring stopped.', PALETTE['text_dim'])
+        return
+    folder = self._get_folder()
+    if folder is None:
+        return
+
+    def _on_organized(filename: str, status: str) -> None:
+        self.root.after(0, lambda: self._set_status(f'👁  {filename} {status}', PALETTE['success']))
+    self.monitor = FolderMonitor(folder, _on_organized)
+    self.monitor.start()
+    self.watch_btn.configure(text='●  Watching', fg_color=PALETTE['success'], border_color=PALETTE['success'], hover_color='#1ea855')
+    self.watch_indicator.configure(text='● Watching', text_color=PALETTE['success'])
+    self._set_status(f'👁  Monitoring: {folder}', PALETTE['success'])
+
+def _open_activity(self) -> None:
+    ActivityDialog(self)
+
+def _open_settings(self) -> None:
+    SettingsDialog(self)
+
+def _on_close(self) -> None:
+    """Clean up before exit."""
+    if self.monitor and self.monitor.is_running:
+        self.monitor.stop()
+    folder = self.folder_entry.get().strip()
+    if folder:
+        config_manager.set_value('last_folder', folder)
+    self.root.destroy()
+
