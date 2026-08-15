@@ -3,8 +3,6 @@ gui.py
 ------
 Main GUI for File Organizer v2.0.
 Built with CustomTkinter for a modern, professional look on Windows.
-Glassmorphism enhancements: animated watch pulse, progress color transitions,
-row hover depth effect, stat card value flash.
 
 Layout:
   ┌─────────────────────────────────────────────────────────┐
@@ -989,16 +987,9 @@ class App:
         self.root.update_idletasks()
 
     def _set_progress(self, value: float) -> None:
-        """value: 0.0 – 1.0. Progress bar color transitions: cyan → orange → green."""
+        """value: 0.0 – 1.0"""
         self.progress_bar.set(value)
         self.progress_pct.configure(text=f"{int(value * 100)}%")
-        if value < 0.4:
-            color = PALETTE["accent"]      # cyan — starting
-        elif value < 0.85:
-            color = PALETTE["warning"]     # orange — mid-way
-        else:
-            color = PALETTE["success"]     # green — almost done
-        self.progress_bar.configure(progress_color=color)
         self.root.update_idletasks()
 
     def _restore_last_folder(self) -> None:
@@ -1012,29 +1003,12 @@ class App:
         self.preview_count_label.configure(text="")
 
     def _update_stat_cards(self, total=0, moved=0, dups=0, errors=0, others=0, total_size=0) -> None:
-        updates = [
-            (self.card_total,  str(total),              PALETTE["accent"]),
-            (self.card_moved,  str(moved),              PALETTE["success"]),
-            (self.card_dups,   str(dups),               PALETTE["warning"]),
-            (self.card_errors, str(errors),             PALETTE["danger"]),
-            (self.card_others, str(others),             PALETTE["text_dim"]),
-            (self.card_size,   format_size(total_size), PALETTE["accent"]),
-        ]
-        for card, value, flash_color in updates:
-            card._val_label.configure(text=value)
-            self._flash_stat_card(card._val_label, flash_color)
-
-    def _flash_stat_card(self, label, flash_color: str, steps: int = 3) -> None:
-        """Briefly flash a stat card value label to its accent color then fade back."""
-        original = PALETTE["text"]
-        def _step(n):
-            if n % 2 == 0:
-                label.configure(text_color=flash_color)
-            else:
-                label.configure(text_color=original)
-            if n < steps * 2:
-                self.root.after(120, lambda: _step(n + 1))
-        _step(0)
+        self.card_total._val_label.configure(text=str(total))
+        self.card_moved._val_label.configure(text=str(moved))
+        self.card_dups._val_label.configure(text=str(dups))
+        self.card_errors._val_label.configure(text=str(errors))
+        self.card_others._val_label.configure(text=str(others))
+        self.card_size._val_label.configure(text=format_size(total_size))
 
     # ── Preview list rendering ────────────────────────────────────────────────
 
@@ -1063,13 +1037,9 @@ class App:
             
             visible_count += 1
             row_color = PALETTE["surface2"] if visible_count % 2 == 0 else PALETTE["surface"]
-            hover_color = "#1e2a48"  # slightly brighter on hover
             row = ctk.CTkFrame(self.preview_scroll,
                                fg_color=row_color, corner_radius=5)
             row.pack(fill="x", pady=1)
-            # Row hover depth effect
-            row.bind("<Enter>", lambda e, r=row, h=hover_color: r.configure(fg_color=h))
-            row.bind("<Leave>", lambda e, r=row, c=row_color: r.configure(fg_color=c))
 
             # File name
             ctk.CTkLabel(row, text=fp.filename, width=190,
@@ -1365,7 +1335,6 @@ class App:
         if self.monitor and self.monitor.is_running:
             self.monitor.stop()
             self.monitor = None
-            self._watch_pulsing = False
             self.watch_btn.configure(text="◉  Watch",
                                      fg_color=PALETTE["surface2"],
                                      border_color=PALETTE["border"])
@@ -1391,21 +1360,6 @@ class App:
                                  hover_color="#1ea855")
         self.watch_indicator.configure(text="● Watching", text_color=PALETTE["success"])
         self._set_status(f"👁  Monitoring: {folder}", PALETTE["success"])
-        # Start animated pulse on the watch indicator
-        self._watch_pulsing = True
-        self._pulse_watch()
-
-    def _pulse_watch(self) -> None:
-        """Alternate the watch indicator between bright green and dim to create a heartbeat pulse."""
-        if not getattr(self, "_watch_pulsing", False):
-            return
-        try:
-            current = self.watch_indicator.cget("text_color")
-            next_color = PALETTE["text_dim"] if current == PALETTE["success"] else PALETTE["success"]
-            self.watch_indicator.configure(text_color=next_color)
-            self.root.after(700, self._pulse_watch)
-        except Exception:
-            pass  # widget may have been destroyed
 
     def _open_activity(self) -> None:
         ActivityDialog(self)
@@ -1415,7 +1369,6 @@ class App:
 
     def _on_close(self) -> None:
         """Clean up before exit."""
-        self._watch_pulsing = False
         if self.monitor and self.monitor.is_running:
             self.monitor.stop()
         folder = self.folder_entry.get().strip()
