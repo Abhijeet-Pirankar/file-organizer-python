@@ -1,64 +1,69 @@
-📂 Advanced Python File Organizer
+# 📁 Advanced File Organizer
 
-An automated file management tool built with Python that organizes files into categorized folders based on their extensions.
+A professional desktop application for **smart, safe, and organized file management**.
 
-🚀 Features
+Built with a modern web-based UI and a Python backend, Advanced File Organizer helps users analyze and organize files on their local computer.
 
-- Automatic file categorization
-- Duplicate file handling
-- Activity logging
-- Report generation
-- File statistics
-- EXE version available
-- Supports multiple file types
+---
 
-📁 Supported Categories
+## ✨ Features
 
-- Images (.jpg, .jpeg, .png, .gif, .webp)
-- PDFs (.pdf)
-- Videos (.mp4, .mkv, .avi, .mov)
-- Documents (.docx, .txt, .pptx, .xlsx)
-- Music (.mp3, .wav)
-- Archives (.zip, .rar, .7z)
-- Programs (.exe, .msi)
-- Code Files (.py, .html, .css, .js, .java, .cpp)
+| Feature | Description |
+|---|---|
+| 🖥️ Modern GUI | Clean dark-themed interface |
+| 📂 Folder Browser | Select a local folder using the native Windows folder picker |
+| 🔍 Analyze Mode | Scan a folder without moving files |
+| 👁️ Preview Mode | Preview files before organizing |
+| ⚡ Smart Organizer | Automatically categorize files |
+| ↩️ Undo | Restore files after organizing |
+| 📊 Statistics | View file counts and organization statistics |
+| 🔎 Search & Filters | Search and filter analyzed files |
+| 📡 Watch Mode | Monitor folders for changes |
+| 🧩 Duplicate Detection | Detect duplicate files |
+| 📁 Recursive Scanning | Optionally scan subfolders |
+| ⚙️ Custom Rules | Configure categories and organization rules |
+| 📝 Activity Log | Keep track of file operations |
 
-🛠 Technologies Used
+---
 
-- Python
-- os
-- shutil
-- PyInstaller
-- Git & GitHub
+## 📂 Supported Categories
 
-▶️ How to Run
+The organizer can classify files into categories such as:
 
-Python Version
+- 🖼️ Images
+- 📄 PDFs
+- 📝 Documents
+- 🎬 Videos
+- 🎵 Music
+- 📦 Archives
+- 💻 Programs
+- 👨‍💻 Code
+- 📁 Others
 
-python file_organizer.py
+---
 
-EXE Version
+## 🏗️ Architecture
 
-Download the latest EXE from the Releases section and run:
+Advanced File Organizer uses a local desktop architecture:
 
-file_organizer.exe
+```text
+┌──────────────────────────────┐
+│       Modern Web UI          │
+│        React + Vite          │
+└──────────────┬───────────────┘
+               │
+               │ Local communication
+               ▼
+┌──────────────────────────────┐
+│       Python Backend         │
+│      File Management         │
+└──────────────┬───────────────┘
+               │
+               ▼
+┌──────────────────────────────┐
+│      Local File System       │
+│  Windows folders and files   │
+└──────────────────────────────┘
 
-📊 Output
-
-The program generates:
-
-- Organized folders
-- log.txt (activity log)
-- report.txt (summary report)
-
-📌 Future Improvements
-
-- GUI using Tkinter
-- Drag and Drop Support
-- Dark Mode Interface
-- Real-Time Folder Monitoring
-
-👨‍💻 Author
-
-Abhijeet Sanjay Pirankar
-
+Author:
+"Abhijeet Pirankar"
