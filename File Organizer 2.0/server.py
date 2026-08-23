@@ -2,14 +2,11 @@ import dataclasses
 import os
 import sys
 from pathlib import Path
-import threading
 from typing import Optional, Dict, Any, List
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import tkinter as tk
-from tkinter import filedialog
 
 import organizer as org_module
 import undo_manager as undo_module
@@ -25,7 +22,7 @@ app = FastAPI(title="File Organizer API")
 # Allow CORS for the React frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1):\d+$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -48,21 +45,35 @@ class WatchRequest(BaseModel):
 @app.get("/api/browse")
 def browse_folder():
     """Opens a native folder dialog and returns the selected path."""
-    folder_path = ""
-    def open_dialog():
-        nonlocal folder_path
-        root = tk.Tk()
-        root.withdraw()
-        # Make the dialog appear on top
-        root.attributes("-topmost", True)
-        folder_path = filedialog.askdirectory()
-        root.destroy()
-        
-    # Run in a separate thread to avoid blocking the asyncio event loop
-    thread = threading.Thread(target=open_dialog)
-    thread.start()
-    thread.join()
-    
+    import subprocess
+    import sys
+    import os
+
+    print("\nBACKEND:", flush=True)
+    print("Browse request received", flush=True)
+    print("-> opening folder picker", flush=True)
+
+    try:
+        picker_script = os.path.join(os.path.dirname(__file__), "folder_picker.py")
+        result = subprocess.run(
+            [sys.executable, picker_script],
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+        folder_path = result.stdout.strip()
+    except subprocess.TimeoutExpired:
+        folder_path = ""
+    except Exception:
+        folder_path = ""
+
+    if folder_path:
+        print("\nBACKEND:")
+        print(f"Folder selected: {folder_path}")
+    else:
+        print("\nBACKEND:")
+        print("Folder selection was cancelled or failed.")
+
     return {"path": folder_path}
 
 @app.post("/api/analyze")
