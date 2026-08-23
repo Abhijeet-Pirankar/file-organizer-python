@@ -1,12 +1,158 @@
-<!doctype html>
-<html lang="en" class="dark">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Advanced File Organizer</title>
-  </head>
-  <body class="bg-[#030712] text-gray-100 min-h-screen selection:bg-cyan-500/30 font-sans antialiased overflow-hidden">
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced File Organizer v2.0</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="background-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+        <div class="blob blob-4"></div>
+    </div>
+
+    <div class="app-container">
+        <!-- Header -->
+        <header class="glass-panel header">
+            <div class="header-left">
+                <div class="logo">
+                    <span class="icon">📁</span>
+                </div>
+                <div class="title-container">
+                    <h1>Advanced File Organizer</h1>
+                    <p>v2.0 • Smart & Safe File Management</p>
+                </div>
+            </div>
+            <div class="header-right">
+                <div id="status-indicator" class="status-ready">● Ready</div>
+            </div>
+        </header>
+
+        <!-- Folder Selection -->
+        <section class="glass-panel folder-section">
+            <div class="input-group">
+                <label>📁 Folder to Organize:</label>
+                <div class="input-row">
+                    <input type="text" id="folder-input" placeholder="Select a folder..." readonly>
+                    <button class="btn btn-outline" id="browse-btn">Browse</button>
+                </div>
+                <label class="checkbox-container">
+                    <input type="checkbox" id="recursive-checkbox">
+                    <span class="checkmark"></span>
+                    Include Subfolders (recursive)
+                </label>
+            </div>
+        </section>
+
+        <!-- Action Bar -->
+        <section class="glass-panel action-bar">
+            <button class="btn btn-action" id="analyze-btn">🔍 Analyze</button>
+            <button class="btn btn-action" id="preview-btn">👁 Preview</button>
+            <button class="btn btn-primary" id="organize-btn">⚡ Organize</button>
+            <button class="btn btn-action" id="undo-btn">↩ Undo</button>
+            <button class="btn btn-action" id="watch-btn">◉ Watch</button>
+            <div class="divider"></div>
+            <button class="btn btn-action" id="activity-btn">📊 Activity</button>
+        </section>
+
+        <!-- Progress -->
+        <section class="glass-panel progress-section">
+            <div class="progress-info">
+                <span id="progress-text">✓ Ready</span>
+                <span id="progress-percent">0%</span>
+            </div>
+            <div class="progress-bar-container">
+                <div class="progress-bar-fill" id="progress-fill"></div>
+            </div>
+        </section>
+
+        <!-- Main Content Area -->
+        <main class="main-area">
+            <!-- Preview Panel -->
+            <div class="glass-panel preview-panel">
+                <div class="panel-header">
+                    <h2>📋 File Preview</h2>
+                    <span id="preview-count" class="count-badge">0 files</span>
+                </div>
+                <div class="table-container">
+                    <table id="preview-table">
+                        <thead>
+                            <tr>
+                                <th>File Name</th>
+                                <th>Size</th>
+                                <th>Category</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="preview-body">
+                            <tr>
+                                <td colspan="4" class="empty-state">Run Analyze or Preview to see files.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Stats Panel -->
+            <div class="glass-panel stats-panel">
+                <div class="panel-header">
+                    <h2>📊 Statistics</h2>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-top">
+                            <span class="stat-icon accent-text">📄</span>
+                            <span class="stat-label">Total Files</span>
+                        </div>
+                        <div class="stat-value" id="stat-total">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-top">
+                            <span class="stat-icon success-text">✓</span>
+                            <span class="stat-label">Organized</span>
+                        </div>
+                        <div class="stat-value" id="stat-moved">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-top">
+                            <span class="stat-icon warning-text">◇</span>
+                            <span class="stat-label">Duplicates</span>
+                        </div>
+                        <div class="stat-value" id="stat-dups">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-top">
+                            <span class="stat-icon danger-text">⚠</span>
+                            <span class="stat-label">Errors</span>
+                        </div>
+                        <div class="stat-value" id="stat-errors">0</div>
+                    </div>
+                </div>
+
+                <div class="category-breakdown">
+                    <h3>Category Breakdown</h3>
+                    <div id="category-bars" class="bars-container">
+                        <p class="empty-state">No data available.</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals (Hidden by default) -->
+    <div id="activity-modal" class="modal-overlay hidden">
+        <div class="glass-panel modal-content">
+            <h2>🕰 Recent Activity</h2>
+            <div id="activity-list" class="activity-list"></div>
+            <button class="btn btn-outline" id="close-activity-btn" style="margin-top: 15px; width: 100%;">Close</button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
 </html>
