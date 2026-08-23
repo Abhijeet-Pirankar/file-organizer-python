@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "dev": "concurrently \"cd frontend && npm run dev\" \".\\.venv\\Scripts\\python.exe server.py\""
+  },
   "devDependencies": {
     "concurrently": "^10.0.5"
   }
