@@ -1,6 +1,11 @@
 import os
 import shutil
+import sys
 from datetime import datetime
+
+# Set console output encoding to UTF-8 to support emojis on Windows
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
 
 
 def get_unique_filename(destination):
